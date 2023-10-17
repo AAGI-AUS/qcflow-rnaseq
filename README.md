@@ -1,6 +1,7 @@
 # qcflow-rnaseq
 
-QC and trimming pipeline for RNA-seq reads.     
+QC and trimming pipeline for RNA-seq reads.      
+The pipeline is based on the [qcflow](https://github.com/ccdmb/qcflow/tree/master) but including newer software and also specifically focused to RNAseq.      
 
 The pipeline runs the follwing:       
 * FastQC for quality control
