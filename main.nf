@@ -4,6 +4,12 @@
 NXF ver 23.03 needed because DSL2 language properties
 */
 
+/*
+vim: syntax=groovy
+-*- mode: groovy;-*-
+*/
+
+
 def helpMessage() {
     log.info"""
     # qcflow-rnaseq
@@ -72,13 +78,7 @@ def helpMessage() {
                                |                  | to check for contamination
                                |                  | before using this.
 
-    `--filter_phred <int>`     | 5                | Filter out reads that have
-                               |                  | lower average phred scores
-                               |                  | than this. Keep this low.
-                               |                  | bbduk seems to be a bit
-                               |                  | "filter happy" for this.
-
-    `--trim_phred <int>`       | 2                | Trim bases with phred
+    `--avg_quality <int>`      | 20               | Trim bases with phred
                                |                  | qualities lower than this
                                |                  | off the end of reads.
                                |                  | Generally quality trimming
@@ -131,7 +131,6 @@ def helpMessage() {
     """.stripIndent()
 }
 
-params.help = "NA"
 if (params.help){
     helpMessage()
     exit 0
@@ -143,13 +142,12 @@ params.fastq = false
 params.references = false
 params.adapters = "data/truseq_adapters.fasta"
 params.scontaminants = "data/synth_cont.fasta"
-params.qscore_cutoff = 20
-//params.filter_phred = 5
-//params.trim_phred = 2
+params.qual_phred = 20
 params.min_read_length = 50
 params.contaminants = false
 params.map = false
 //params.krakendb = false
+params.multi_qc_conf="conf/multiqc/multiqc_config.yml"
 
 // INPUT VALIDATION
 
@@ -173,42 +171,105 @@ if ( params.references ) {
     )
 }
 
-// END OF INPUT VALIDATION
+if ( params.adapters ) {
+    adapters = Channel.fromPath(
+		params.adapters,
+		checkIfExists: true, 
+		type: "file").collectFile(
+				name: 'truseq_adapters.fasta', newLine: true, sort: "deep").first()
+} else {
+    log.info "Hey I need some adapter sequences to trim please."
+    log.info "Some TruSeq adapters are in the 'data' folder."
+    exit 1
+}
 
-//fastqPairs.into {
-//    fastqPairs4QC;
-//    fastqPairs4AdapterTrimming;
-//    fastqPairs4Alignment;
-//}
 
-// fastp trimmed files are published, json are only sent in the channel and used only by multiqc
+if ( params.multi_qc_conf ) {
+    multiqc = Channel.fromPath(
+                params.multi_qc_conf,
+                checkIfExists: true,
+                type: "file").collectFile(name: 'multi_qc.config')
+}
+
+// END OF VALIDATION
+
+// fastp trimmed files are published, json are only sent in the channel and used by multiqc
 process fastp {
 
     tag "filter $sample_id"
     //echo true
-    publishDir "${params.outdir}/trimmed_reads", mode: 'copy', pattern: 'trimmed_reads/*' // publish only trimmed fastq files
+    publishDir params.outdir, mode: 'copy', pattern: 'trimmed_reads/*fastq.gz', overwrite: false  // publish trimmed fastq files
+    
+    cpus 16
 
     input:
 	tuple val(sample_id), path(reads)
+	path "truseq_adapters.fasta"
     
     output:
-	tuple val(sample_id), path("${sample_id}_filt_R*.fastq.gz"), emit: trimmed_reads
-	path("${sample_id}.fastp.json"), emit: json
+	tuple val(sample_id), path("trimmed_reads/${sample_id}_filt_R*.fastq.gz"), emit: trimmed_reads
+	path("trimmed_reads/${sample_id}.fastp.json"), emit: json
 
     script:
     """
     mkdir trimmed_reads
-
     fastp -i ${reads[0]} -I ${reads[1]} \\
       -o 'trimmed_reads/${sample_id}_filt_R1.fastq.gz' -O 'trimmed_reads/${sample_id}_filt_R2.fastq.gz' \\
-      -q $params.qscore_cutoff \\
+      -q $params.qual_phred \\
       -l $params.min_read_length \\
+      --adapter_fasta "truseq_adapters.fasta" \\
       -w ${task.cpus} \\
-      -j 'trimmed_reads/${sample_id}.fastp.json'    
+      -j 'trimmed_reads/${sample_id}.fastp.json'
+      2>&1 | tee > fastp.log
     """
 }
 
+process fastqc {
+    
+    tag "Fastqc on $sample_id"
+
+    cpus 24
+
+    input:
+	tuple val(sample_id), path(reads)
+
+    output:
+	path "fastqc/fastqc_${sample_id}_logs"
+    
+    script:
+    """
+    mkdir -p 'fastqc/fastqc_${sample_id}_logs'
+    fastqc -t ${task.cpus} \\
+	-o 'fastqc/fastqc_${sample_id}_logs' \\
+	-f fastq -q ${reads[0]} ${reads[1]}
+    """
+}
+
+process multiqc {
+    
+    publishDir params.outdir, mode: 'copy'
+
+    input:
+        path x
+        //path "multiqc.config"
+
+    output:
+        file("multiqc/multiqc_report.html")
+
+    script:
+    """
+    multiqc ${x} --filename "multiqc/multiqc_report.html" 
+    """
+} 
+
+
 workflow {
-    fastqPairs_ch.view()
-    fastp(fastqPairs_ch)
+    fastp_out = fastp(fastqPairs_ch, adapters)
+    //fastqc_raw_out = fastqc(fastqPairs_ch)
+    fastqc_trimmed_out = fastqc(fastp_out.trimmed_reads)
+    multiqc(fastp_out.json.mix(fastqc_trimmed_out).collect())
+}
+
+workflow.onComplete {
+	log.info ( workflow.success ? "\nDone! Open the following report in your browser --> $params.outdir/multiqc/multiqc_report.html\n" : "Oops .. something went wrong" )
 }

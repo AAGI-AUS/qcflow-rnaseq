@@ -1,0 +1,4 @@
+fn_clean_exts:
+    - '.fastq.gz'
+
+intro_text: False
