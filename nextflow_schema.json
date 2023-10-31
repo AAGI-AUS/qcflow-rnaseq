@@ -1,0 +1,96 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/./master/nextflow_schema.json",
+    "title": ". pipeline parameters",
+    "description": "",
+    "type": "object",
+    "definitions": {
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "fa_icon": "fas fa-terminal",
+            "description": "Define where the pipeline should find input data and save output data.",
+            "required": [
+                "outdir"
+            ],
+            "properties": {
+                "outdir": {
+                    "type": "string",
+                    "format": "directory-path",
+                    "description": "The output directory where the results will be saved. You have to use absolute paths to storage on Cloud infrastructure.",
+                    "fa_icon": "fas fa-folder-open"
+                }
+            }
+        },
+        "institutional_config_options": {
+            "title": "Institutional config options",
+            "type": "object",
+            "fa_icon": "fas fa-university",
+            "description": "Parameters used to describe centralised config profiles. These should not be edited.",
+            "help_text": "The centralised nf-core configuration profiles use a handful of pipeline parameters to describe themselves. This information is then printed to the Nextflow log when you run a pipeline. You should not need to change these values when you run a pipeline.",
+            "properties": {
+                "multi_qc_conf": {
+                    "type": "string",
+                    "description": "Base directory for multi-qc configs.",
+                    "hidden": true,
+                    "default": "conf/multiqc/multiqc_config.yml"
+                },
+                "custom_config_base": {
+                    "type": "string",
+                    "description": "Base directory for Institutional configs.",
+                    "default": "\"conf/multiqc/multiqc_config.yml\"",
+                    "hidden": true,
+                    "help_text": "If you're running offline, Nextflow will not be able to fetch the institutional config files from the internet. If you don't need them, then this is not a problem. If you do need them, you should download the files from the repo and tell Nextflow where to find them with this parameter.",
+                    "fa_icon": "fas fa-users-cog"
+                }
+            }
+        },
+        "fastp_options": {
+            "title": "Fastp options",
+            "type": "object",
+            "description": "Parameters used in fastp pipeline",
+            "default": "",
+            "properties": {
+                "min_read_length": {
+                    "type": "number",
+                    "description": "-l min read length",
+                    "default": 50
+                },
+                "qual_phred": {
+                    "type": "number",
+                    "minimum": 10,
+                    "maximum": 30,
+                    "description": "-q min Phred quality",
+                    "default": 20
+                },
+                "adapters": {
+                    "type": "string",
+                    "description": "path to adapters to remove (fasta)",
+                    "default": "\"data/truseq_adapters.fasta\""
+                }
+            },
+            "fa_icon": "fas fa-wrench"
+        }
+    },
+    "allOf": [
+        {
+            "$ref": "#/definitions/input_output_options"
+        },
+        {
+            "$ref": "#/definitions/institutional_config_options"
+        },
+        {
+            "$ref": "#/definitions/fastp_options"
+        }
+    ],
+    "properties": {
+        "inputdir_fastq": {
+            "type": "string",
+            "description": "The input dir for fastq paired files",
+            "mimetype": "fastq"
+        }
+    },
+    "required": [
+        "inputdir_fastq"
+    ]
+}
