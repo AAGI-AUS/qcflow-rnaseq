@@ -15,7 +15,7 @@ How to run the pipeline on VM or locally
 ```
 # in this case we use the nimbus profile - contact me if you want other running options
 nextflow run -resume \
-	-with-singularity "docker://0000000000777/qcflow-rnaseq:v0.0.3" \
+	-with-singularity "docker://0000000000777/qcflow-rnaseq:v0.0.5" \
 	-profile pawsey_nimbus \
 	 main.nf --outdir test \
 	--inputdir_fastq "input/*R{1,2}.fastq.gz"
