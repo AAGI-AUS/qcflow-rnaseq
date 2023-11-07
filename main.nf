@@ -6,7 +6,7 @@ nextflow.enable.dsl=2
  *  ======================================================================================================
  */
 line="=".multiply(100)
-ver="qcflow-rnaseq v0.2"
+ver="qcflow-rnaseq v0.0.5"
 
 params.help                  = null
 params.genome                = null
@@ -23,11 +23,6 @@ params.workflow              = "all"
 
 //STAR
 params.sjOverhang            = 149
-//params.index_dir           = "star_index"
-
-//HISAT2
-//params.exons_tsv             = null
-//params.splicesites_tsv       = null 
 
 include { validateParameters; paramsHelp; paramsSummaryLog; fromSamplesheet } from 'plugin/nf-validation'
 
@@ -44,28 +39,20 @@ log.info paramsSummaryLog(workflow)
 
 workflow_input         = params.workflow
 sjOverhang             = params.sjOverhang
-//index_dir              = params.index_dir
-//splicesites            = params.splicesites_tsv
-//exons                  = params.exons_tsv
-
-println(workflow_input)
 
 switch (workflow_input) {
     case ["genome-index"]:
         include { run_star_index; run_hisat_index } from './modules/module_prep_index.nf'
         genome = params.genome
         genes = params.genes
-	//exons = params.exons_tsv
-	//splicesites = params.splicesites_tsv
-        //index_dir = params.index_dir
         break
 }
 
 
 workflow GENOME_INDEXING {
     main:
-    //run_star_index()
     run_hisat_index()
+    run_star_index()
 }
 
 workflow {
