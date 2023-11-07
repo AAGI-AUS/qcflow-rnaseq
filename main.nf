@@ -44,9 +44,9 @@ log.info paramsSummaryLog(workflow)
 
 workflow_input         = params.workflow
 sjOverhang             = params.sjOverhang
-index_dir              = params.index_dir
-splicesites            = params.splicesites_tsv
-exons                  = params.exons_tsv
+//index_dir              = params.index_dir
+//splicesites            = params.splicesites_tsv
+//exons                  = params.exons_tsv
 
 println(workflow_input)
 

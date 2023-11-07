@@ -37,33 +37,18 @@ process run_star_index {
     """
 }
 
-process prepare_genes_hisat{
-    label 'hisat2 prep'
-    tag { "hisat2: index prep" }
-    publishDir "${index_dir}", mode: 'copy', overwrite: true
-
-    output:
-    path("splicesites.tsv"), emit ss_hisat
-    path("exons.tsv"), emit exons_hisat
-
-    script:
-    """
-    hisat2_extract_exons.py ${genes} > exons.tsv
-    hisat2_extract_splice_sites.py ${genes} > splicesites.tsv
-    """
-}
-
-
 process run_hisat_index {
     label 'hisat2'
     tag { "hisat2: index" }
     publishDir "${index_dir}", mode: 'copy', overwrite: true  
 
     output:
-    tuple val("hisat2Index"), path("*"), emit: hisat_index
+    path("hisat_index"), emit: hisat_index
     
     script:
     """
+    mkdir hisat_index
+
     hisat2_extract_exons.py ${genes} > exons.tsv
     hisat2_extract_splice_sites.py ${genes} > splicesites.tsv
     hisat2-build -p ${cpus} --ss splicesites.tsv --exon exons.tsv ${genome} hisat_index

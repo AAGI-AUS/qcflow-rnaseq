@@ -76,14 +76,10 @@
       "properties": {
         "sjOverhang": {
           "type": "number",
-          "default": 149.0,
+          "default": 149,
           "minimum": 50,
           "maximum": 300,
           "description": "sjDbOverhang value to use"
-        },
-        "help": {
-          "type": "string",
-          "description": "Show help message and exit"
         }
       }
     }
@@ -101,5 +97,11 @@
     {
       "$ref": "#/definitions/star_index"
     }
-  ]
+  ],
+  "properties": {
+    "help": {
+      "type": "string",
+      "description": "Show help message and exit"
+    }
+  }
 }
