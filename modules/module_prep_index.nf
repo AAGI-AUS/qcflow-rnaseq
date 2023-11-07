@@ -51,6 +51,6 @@ process run_hisat_index {
 
     hisat2_extract_exons.py ${genes} > exons.tsv
     hisat2_extract_splice_sites.py ${genes} > splicesites.tsv
-    hisat2-build -p ${cpus} --ss splicesites.tsv --exon exons.tsv ${genome} hisat_index
+    hisat2-build -p ${cpus} --ss splicesites.tsv --exon exons.tsv ${genome} hisat_index/hisat_index
     """
 }
