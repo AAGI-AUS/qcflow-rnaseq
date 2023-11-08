@@ -12,9 +12,6 @@ sjOverhang       = params.sjOverhang
 
 //HISAT
 
-cpus             = params.max_cpus
-max_memory       = params.max_memory
-
 process run_star_index {
 
     label 'star'
