@@ -2,9 +2,9 @@
 
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=32
+#SBATCH --cpus-per-task=2
 #SBATCH --partition=work
-#SBATCH --time=01:00:00
+#SBATCH --time=1-00:00:00
 #SBATCH --account=y95
 #SBATCH --mail-type=ALL
 #SBATCH --export=NONE
