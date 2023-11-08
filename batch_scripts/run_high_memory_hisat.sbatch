@@ -3,8 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=32
-#SBATCH --mem=500GB
-#SBATCH --partition=highmem
+#SBATCH --partition=work
 #SBATCH --time=01:00:00
 #SBATCH --account=y95
 #SBATCH --mail-type=ALL
