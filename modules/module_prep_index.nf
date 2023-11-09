@@ -35,6 +35,29 @@ process run_star_index {
     """
 }
 
+process run_star_index_snps {
+    label "star"
+
+    tag { "star_snps: index" }
+    publishDir "${index_dir}/${output_dir}", mode: 'copy', overwrite: true
+
+    output:
+    tuple val("starIndex"), path("*"), emit: star_index
+
+    script:
+    """
+    STAR --runMode genomeGenerate \
+         --genomeDir star_index_snps \
+         --genomeFastaFiles ${genome} \
+         --genomeTransformVCF ${input_snps} \
+         --genomeTransformType Haploid \
+         --runThreadN ${task.cpus} \
+         --sjdbGTFfile ${genes} \
+         --sjdbOverhang ${sjOverhang}
+    """
+}
+
+
 process run_hisat_index {
     label 'hisat2'
     tag { "hisat2: index" }

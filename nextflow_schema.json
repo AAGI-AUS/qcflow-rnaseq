@@ -40,7 +40,8 @@
                     "enum": [
                         "all",
                         "genome-index",
-                        "reads-qc"
+                        "reads-qc",
+			"align"
                     ],
                     "default": "all"
                 },
@@ -122,9 +123,12 @@
             "description": "",
             "default": "",
             "properties": {
+                "snps": {
+                    "type": "string"
+                },
                 "sjOverhang": {
                     "type": "number",
-                    "default": 149,
+                    "default": 149.0,
                     "minimum": 50,
                     "maximum": 300,
                     "description": "sjDbOverhang value to use"

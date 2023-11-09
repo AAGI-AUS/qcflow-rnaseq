@@ -1,4 +1,5 @@
 #!/usr/bin/env nextflow
+
 nextflow.enable.dsl=2
 
 /*  ======================================================================================================
@@ -26,8 +27,9 @@ config_profile_url           = null
 params.workflow              = "all"
 params.aligner 	             = "star"
 
-// STAR
+// STAR index
 params.sjOverhang            = 149
+params.snps                  = null
 
 // Fastp params
 params.adapters              = "data/truseq_adapters.fasta"
@@ -41,6 +43,7 @@ workflow_input         = params.workflow
 aligner                = params.aligner
 
 sjOverhang             = params.sjOverhang
+snp                    = params.snps
 
 genome                 = params.genome
 genes                  = params.genes
@@ -64,13 +67,31 @@ validateParameters()
 // Print summary of supplied parameters
 log.info paramsSummaryLog(workflow)
 
+//-----------------------------------------------------------------------------------------------------------------------
+// Functions
+
+def getLibraryId( prefix ){
+  // Return the ID number, you can change for other file formats, here it just takes the first part before "_"
+  prefix.split("_")[0]
+}
+
+def is_null(var) {
+  if (var == null) {
+    return true
+  } else {
+    return false
+  }
+}
+
+
 switch (workflow_input) {
     case ["genome-index"]:
-        include { run_star_index; run_hisat_index; run_hisat_index_high_mem } from './modules/module_prep_index.nf'
+        include { run_star_index; run_star_index_snps; run_hisat_index; run_hisat_index_high_mem } from './modules/module_prep_index.nf'
         aligner = params.aligner
 	genome = params.genome
         genes = params.genes
 	output_dir = params.output_dir
+	snp = params.snps
         break;
     case ["read-trimming"]:
 	include { process_reads_fastp; run_fastqc; run_multiqc } from './modules/module_read_trimming.nf'
@@ -85,12 +106,29 @@ switch (workflow_input) {
         samples = Channel.fromFilePairs("${data_dir}", type: 'file')
                     .ifEmpty { exit 1, data_dir }
         break;
+     case ["align"]:
+	include { run_star_align; run_multiqc_star } from './modules/module_read_align.nf'
+	genes = params.genes
+	data_dir = params.data_dir
+	index_dir = params.index_dir
+	output_dir = params.output_dir
+	sjOverhang = params.sjOverhang
+	samples = Channel.fromFilePairs("${data_dir}", flat: true)
+                .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+                .groupTuple(sort: true)
+		.ifEmpty { exit 1, data_dir }
+	break;
 }
 
 
 workflow GENOME_INDEXING_STAR {
     main:
     run_star_index()
+}
+
+workflow GENOME_INDEXING_STAR_SNPS {
+    main:
+    run_star_index_snps()
 }
 
 workflow GENOME_INDEXING_HISATHIGHMEM {
@@ -111,18 +149,35 @@ workflow READ_QC {
     run_multiqc(fastqc_out)
 }
 
+workflow ALIGN_STAR {
+     take:
+     samples
+
+     main:
+     run_star_align(samples)
+     run_star_align.out.star_reports
+        .map { it -> it[1]}
+        .flatten()
+        .collect()
+        .set { reports }
+     run_multiqc_star(reports)
+}
 
 workflow {
 	switchVariable = 0
 	
 	if (workflow_input == "genome-index" && aligner == "star") {
     		switchVariable = 1;
+	} else if (workflow_input == "genome-index" && aligner == "star-snps" && !is_null(snps)){
+                switchVariable = 2;
 	} else if (workflow_input == "genome-index" && aligner == "hisat") {
-   		switchVariable = 2;
+   		switchVariable = 3;
 	} else if (workflow_input == "genome-index" && aligner == "hisat-highmem") {
-    		switchVariable = 3;
+    		switchVariable = 4;
 	} else if (workflow_input == "reads-qc") {
-		switchVariable = 4
+		switchVariable = 5;
+	} else if (workflow_input == "align" && (aligner == "star" || aligner == "star-snps")) {
+		switchVariable = 6;
 	}
 
 	switch (switchVariable) {
@@ -130,13 +185,19 @@ workflow {
         	GENOME_INDEXING_STAR();
         	break;
     	case 2:
+		GENOME_INDEXING_STAR_SNPS();
+		break;
+	case 3:
         	GENOME_INDEXING_HISAT();
         	break;
-    	case 3:
+    	case 4:
         	GENOME_INDEXING_HISATHIGHMEM();
         	break;
-	case 4:
+	case 5:
 		READ_QC(samples);
+		break;
+	case 6:
+		ALIGN_STAR(samples)
 		break;
     	default:
         	println("Please provide the correct input options")

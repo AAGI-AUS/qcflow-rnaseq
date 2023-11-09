@@ -2,10 +2,10 @@
 
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=12
-#SBATCH --mem=4GB
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=2GB
 #SBATCH --partition=work
-#SBATCH --time=01:00:00
+#SBATCH --time=1-00:00:00
 #SBATCH --account=y95
 #SBATCH --mail-type=ALL
 #SBATCH --export=NONE
@@ -14,10 +14,12 @@ module load nextflow/23.04.3
 module load singularity/3.11.4-slurm
 
 nextflow run -resume -profile singularity,pawsey_setonix ./main.nf \
-  --workflow reads-qc \
-  --aligner hisat-highmem \
-  --genome "$PWD/genomes/Akashinriki_pseudomolecule_v1.fasta" \
-  --genes "$PWD/genomes/Akashinriki.gtf" \
+  --workflow align \
+  --aligner star \
+  --sjOverhang 149 \
+  --genome "/scratch/y95/kgagalova/barley/barley_rnaseq/barley_reference/Morex/genome/Morex_pseudomolecules_v2.fasta" \
+  --genes "/scratch/y95/kgagalova/barley/barley_rnaseq/barley_reference/Morex/annotation/Morex.gtf" \
   --output_dir results \
-  --data_dir "/scratch/y95/kgagalova/barley/barley_rnaseq/raw_reads/test_run/*_R{1,2}.fastq.gz"
+  --index_dir "/scratch/y95/kgagalova/barley/barley_rnaseq/alignments/indices/star/Mor/star_index/Morex" \
+  --data_dir "/scratch/y95/kgagalova/barley/barley_rnaseq/trimmed_reads/reads_Mor/*filt_R{1,2}.fastq.gz" 
   
