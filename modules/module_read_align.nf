@@ -19,8 +19,9 @@ process run_star_align {
         tuple val(sample_id), path(reads1), path(reads2)
 
      output:
-	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Aligned.out.bam"), emit: star_alignments
+	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: star_alignments
     	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Log.final.out"), emit: star_reports
+	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_ReadsPerGene.out.tab"), emit: star_counts
 
 script:
         """
@@ -52,17 +53,17 @@ script:
         """
 }
 
-process run_multiqc_star {
-    tag { 'multiqc: star' }
-    publishDir "${output_dir}/alignment_star", mode: 'copy', overwrite: false
+process run_multiqc {
+    tag { 'multiqc run' }
+    publishDir "${output_dir}/", mode: 'copy', overwrite: false
 
     input:
-    path(dir) 
+    path(dir)
     
     output:
-    path("qc_star"), emit: multiqc_report
+    path("qc_align"), emit: multiqc_report
     
     """
-    multiqc . --force --outdir qc_star
+    multiqc . --force --outdir qc_align
     """
 }

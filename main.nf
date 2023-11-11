@@ -107,7 +107,8 @@ switch (workflow_input) {
                     .ifEmpty { exit 1, data_dir }
         break;
      case ["align"]:
-	include { run_star_align; run_multiqc_star } from './modules/module_read_align.nf'
+	include { run_star_align; run_multiqc } from './modules/module_read_align.nf'
+	include { convert_bed; run_rnaseqc } from './modules/module_align_qc.nf'
 	genes = params.genes
 	data_dir = params.data_dir
 	index_dir = params.index_dir
@@ -139,7 +140,7 @@ workflow GENOME_INDEXING_HISATHIGHMEM {
 workflow READ_QC {
     take:
     samples
-    
+       
     main:
     run_fastqc(samples)
     run_fastqc.out.qc_html
@@ -160,7 +161,9 @@ workflow ALIGN_STAR {
         .flatten()
         .collect()
         .set { reports }
-     run_multiqc_star(reports)
+     convert_bed(genes)
+     run_rnaseqc(run_star_align.out.star_alignments, genes)
+     run_multiqc(reports)
 }
 
 workflow {
@@ -202,5 +205,5 @@ workflow {
     	default:
         	println("Please provide the correct input options")
 		break;
-}
+	}
 }

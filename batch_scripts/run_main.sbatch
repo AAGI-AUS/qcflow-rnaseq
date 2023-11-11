@@ -19,7 +19,7 @@ nextflow run -resume -profile singularity,pawsey_setonix ./main.nf \
   --sjOverhang 149 \
   --genome "/scratch/y95/kgagalova/barley/barley_rnaseq/barley_reference/Morex/genome/Morex_pseudomolecules_v2.fasta" \
   --genes "/scratch/y95/kgagalova/barley/barley_rnaseq/barley_reference/Morex/annotation/Morex.gtf" \
-  --output_dir results \
+  --output_dir results2 \
   --index_dir "/scratch/y95/kgagalova/barley/barley_rnaseq/alignments/indices/star/Mor/star_index/Morex" \
   --data_dir "/scratch/y95/kgagalova/barley/barley_rnaseq/trimmed_reads/reads_Mor/*filt_R{1,2}.fastq.gz" 
   
