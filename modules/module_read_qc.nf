@@ -20,7 +20,7 @@ process run_fastqc {
     """
 }
 
-process run_multiqc {
+process run_multiqc_reads {
     label 'multiqc'
     tag { 'multiqc: all' }
     publishDir "${outdir}/reads-qc/", mode: 'copy', overwrite: true

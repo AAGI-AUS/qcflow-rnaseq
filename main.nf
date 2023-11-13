@@ -114,10 +114,12 @@ def selectTool(inputParameter) {
    selectedTool = ""
    if (inputParameter in ["star", "star-plants", "star-snps"]) {
         selectedTool = "star"
-     } else {
+   } else if (inputParameter in ["hisat", "hisat_highmem"]) {
         selectedTool = "hisat"
-     }
-    return selectedTool
+   } else {
+        selectedTool = "reads"
+   }
+   return selectedTool
 }
 
 
@@ -137,7 +139,7 @@ switch (workflow_input) {
 	min_len = params.min_read_length
 	break;
      case ["reads-qc"]:
-	include { run_fastqc; run_multiqc } from './modules/module_read_qc.nf'
+	include { run_fastqc; run_multiqc_reads } from './modules/module_read_qc.nf'
 	fastq_dir = params.fastq_dir
         output_dir = params.output_dir
         samples = Channel.fromFilePairs("${fastq_dir}", type: 'file')
@@ -185,7 +187,7 @@ workflow READ_QC {
         .map { it -> it[1] }
         .collect()
         .set { fastqc_out }
-    run_multiqc(fastqc_out)
+    run_multiqc_reads(fastqc_out)
 }
 
 workflow ALIGN_STAR_PLANTS {
@@ -204,7 +206,6 @@ workflow ALIGN_STAR_PLANTS {
      run_bam_stats(run_star_align_plants.out.star_alignements, convert_bed.out)
      run_junction_annotation(run_star_align_plants.out.star_alignements, convert_bed.out)
      run_infer_experiment(run_star_align_plants.out.star_alignements, convert_bed.out)
-     
      run_multiqc(reports, selectTool(params.aligner))
 }
 

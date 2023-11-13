@@ -73,18 +73,22 @@ process run_hisat_align {
 
      script:
      """
-     hisat2 -x ${index_dir} -1 ${reads1.join(",")} -2 ${reads2.join(",")} --summary-file ${sample_id}.hisat.summary.log --rna-strandness FR --dta --threads ${task.cpus} -S test.bam 
+     mkdir -p hisat_aligned/${sample_id}
+     hisat2 -x ${index_dir} -1 ${reads1.join(",")} -2 ${reads2.join(",")} --summary-file ${sample_id}.hisat.summary.log --rna-strandness FR --dta --threads ${task.cpus} -S hisat_aligned/${sample_id}/test.bam 
      """
 }
 
 
 process run_multiqc {
     tag { 'multiqc run' }
-    publishDir "${output_dir}/multi_qc-${aligner}", mode: 'copy', overwrite: true
+    publishDir "${output_dir}", mode: 'copy', overwrite: true
 
     input:
     path(dir)
     val(aligner)
+
+    output:
+    path("multi_qc-${aligner}"), emit: multiQC
     
     """
     multiqc . --force --outdir multi_qc-${aligner}
