@@ -27,7 +27,7 @@ process run_star_align_plants {
     	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Log.final.out"), emit: star_reports
 	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_ReadsPerGene.out.tab"), emit: star_counts
 
-script:
+     script:
         """
         STAR --runThreadN ${task.cpus} \
         --runMode alignReads \
@@ -57,32 +57,25 @@ script:
         """
 }
 
-process run_hisat {
+process run_hisat_align {
 
-     label 'hisat_highmem'
-     tag "Star align reads for ${sample_id}"
+     label 'hisat'
+     tag "Hisat align reads for ${sample_id}"
      publishDir "${output_dir}/alignements", mode: 'copy'
 
      input:
      tuple val(sample_id), path(reads1), path(reads2)
      
      output:
-     tuple val(meta), path("hisat_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.bam"), emit: bam
-     tuple val(meta), path("hisat_aligned/${sample_id}/${sample_id}.hisat2.summary.log"), emit: summary
+     tuple val(meta), path("hisat_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.bam"), emit: hisat_alignements
+     tuple val(meta), path("hisat_aligned/${sample_id}/${sample_id}.hisat2.summary.log"), emit: hisat_reports
      tuple val(meta), path("hisat_aligned/${sample_id}/*splicesite.txt"), emit: splicesites
 
      script:
      """
-     hisat2 \
-     	-x ${index_dir} \
-     	-1 ${reads1.join(",")} \
-     	-2 ${reads2.join(",")} \\
-     	--summary-file ${sample_id}.hisat2.summary.log \\
-     	--threads ${task.cpus} \
-     	| samtools sort --threads ${task.cpus} -o ${sample_id}/${sample_id}_Aligned.sortedByCoord.bam -
+     hisat2 -x ${index_dir} -1 ${reads1.join(",")} -2 ${reads2.join(",")} --summary-file ${sample_id}.hisat.summary.log --rna-strandness FR --dta --threads ${task.cpus} -S test.bam 
      """
 }
-
 
 
 process run_multiqc {

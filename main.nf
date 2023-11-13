@@ -110,6 +110,16 @@ def is_null(var) {
   }
 }
 
+def selectTool(inputParameter) {
+   selectedTool = ""
+   if (inputParameter in ["star", "star-plants", "star-snps"]) {
+        selectedTool = "star"
+     } else {
+        selectedTool = "hisat"
+     }
+    return selectedTool
+}
+
 
 switch (workflow_input) {
     case ["genome-index"]:
@@ -131,10 +141,10 @@ switch (workflow_input) {
 	fastq_dir = params.fastq_dir
         output_dir = params.output_dir
         samples = Channel.fromFilePairs("${fastq_dir}", type: 'file')
-                    .ifEmpty { exit 1, data_dir }
+                    .ifEmpty { exit 1, fastq_dir }
         break;
      case ["align"]:
-	include { run_star_align_plants; run_multiqc } from './modules/module_read_align.nf'
+	include { run_star_align_plants; run_multiqc; run_hisat_align } from './modules/module_read_align.nf'
 	include { convert_bed; run_bam_stats; run_infer_experiment; run_junction_annotation } from './modules/module_align_qc.nf'
 	genes = params.genes
 	fastq_dir = params.fastq_dir
@@ -145,7 +155,7 @@ switch (workflow_input) {
 	samples = Channel.fromFilePairs("${fastq_dir}", flat: true)
                 .map { prefix, file1, file2 -> tuple(extractCharacters(prefix, library_name), file1, file2) }
                 .groupTuple(sort: true)
-		.ifEmpty { exit 1, data_dir }
+		.ifEmpty { exit 1, fastq_dir }
 	break;
 }
 
@@ -191,10 +201,31 @@ workflow ALIGN_STAR_PLANTS {
         .set { reports }
      convert_bed(genes)
      // QC stages
-     run_bam_stats(run_star_align_plants.out.star_alignments, convert_bed.out)
-     run_junction_annotation(run_star_align_plants.out.star_alignments, convert_bed.out)
-     run_infer_experiment(run_star_align_plants.out.star_alignments, convert_bed.out)
-     run_multiqc(reports)
+     run_bam_stats(run_star_align_plants.out.star_alignements, convert_bed.out)
+     run_junction_annotation(run_star_align_plants.out.star_alignements, convert_bed.out)
+     run_infer_experiment(run_star_align_plants.out.star_alignements, convert_bed.out)
+     
+     run_multiqc(reports, selectTool(params.aligner))
+}
+
+
+workflow ALIGN_HISAT {
+    take:
+    samples
+
+    main:
+    run_hisat_align(samples)
+    run_hisat_align.out.hisat_reports
+        .map { it -> it[1]}
+        .flatten()
+        .collect()
+        .set { reports }
+     convert_bed(genes)
+     // QC stages
+     run_bam_stats(run_hisat_align.out.hisat_alignements, convert_bed.out)
+     run_junction_annotation(run_hisat_align.out.hisat_alignements, convert_bed.out)
+     run_infer_experiment(run_hisat_align.out.hisat_alignements, convert_bed.out)
+     run_multiqc(reports, selectTool(params.aligner))
 }
 
 workflow {
@@ -212,6 +243,8 @@ workflow {
 		switchVariable = 5;
 	} else if (workflow_input == "align" && (aligner == "star-plants" || aligner == "star-snps")) {
 		switchVariable = 6;
+	} else if (workflow_input == "align" && (aligner == "hisat" || aligner == "hisat-highmem")) {
+		switchVariable = 7;
 	}
 
 	switch (switchVariable) {
@@ -232,6 +265,9 @@ workflow {
 		break;
 	case 6:
 		ALIGN_STAR_PLANTS(samples)
+		break;
+	case 7:
+		ALIGN_HISAT(samples)
 		break;
     	default:
         	println("Please provide the correct input options")
