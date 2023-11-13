@@ -7,13 +7,13 @@ outdir           = params.output_dir
 
 process convert_bed {
     tag {"convert gtf to bed"}
-    publishDir "${outdir}/align-qc/", mode: 'copy', overwrite: true
+    publishDir "${outdir}/align_rseqc/", mode: 'copy', overwrite: true
 
     input:
     path genes
     
     output:
-    path("${genes.simpleName}.bed12")
+    path("${genes.simpleName}.bed12"), emit: bedfile
 
     script:
     """
@@ -21,9 +21,9 @@ process convert_bed {
     """
 }
 
-process run_rnaseqc {
 
-    tag {"rnaseqc: ${sample_id}"}
+process run_infer_experiment {
+    tag {"rnaseqc - infer experiment: ${sample_id}"}
     publishDir "${outdir}/align-qc/", mode: 'copy', overwrite: true
 
     input:
@@ -32,17 +32,52 @@ process run_rnaseqc {
 
     output:
     tuple val(sample_id), path("infer_experiment/${sample_id}_infer-experiment.out")
-    tuple val(sample_id), path("bam_stat/${sample_id}_bam-stats.out")
-    tuple val(sample_id), path("junctions_annotation/${sample_id}_junction-annotation.r")
 
     script:
     """
     mkdir infer_experiment
-    mkdir bam_stat
-    mkdir junction_annotation
 
     infer_experiment.py -i $bam -r $genes > infer_experiment/${sample_id}_infer-experiment.out
+    """
+}
+
+process run_bam_stats {
+    
+    tag {"rnaseqc - bam stats: ${sample_id}"}
+    publishDir "${outdir}/align-qc/", mode: 'copy', overwrite: true
+
+    input:
+    tuple val(sample_id), path(bam)
+    path(genes)
+
+    output:
+    tuple val(sample_id), path("bam_stat/${sample_id}_bam-stats.out")
+
+    script:
+    """
+    mkdir bam_stat
+
     bam_stat.py -i $bam > bam_stat/${sample_id}_bam-stats.out
-    junction_annotation.py -i $bam -o junction_annotation/${sample_id}_junction-annotation -r $genes
+    """
+}
+
+
+process run_junction_annotation {
+
+    tag {"rnaseqc - junction annotation: ${sample_id}"}
+    publishDir "${outdir}/align-qc/", mode: 'copy', overwrite: true
+
+    input:
+    tuple val(sample_id), path(bam)
+    path(genes)
+
+    output:
+    tuple val(sample_id), path("junction_annotation/${sample_id}/")
+
+    script:
+    """
+    mkdir -p junction_annotation/${sample_id}
+
+    junction_annotation.py -i $bam -o junction_annotation/${sample_id}/${sample_id} -r $genes
     """
 }

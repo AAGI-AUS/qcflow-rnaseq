@@ -14,7 +14,7 @@ params.help                  = null
 params.output_dir            = "results"
 params.genome                = null
 params.genes                 = null
-params.data_dir              = "data"
+params.fastq_dir             = "data"
 
 // system specific parameters
 params.max_cpus              = 1
@@ -31,6 +31,10 @@ params.aligner 	             = "star"
 params.sjOverhang            = 149
 params.snps                  = null
 
+// STAR align 
+params.library_name          = 0
+params.index_dir             = null
+
 // Fastp params
 params.adapters              = "data/truseq_adapters.fasta"
 params.qual_phred            = 20
@@ -44,15 +48,20 @@ aligner                = params.aligner
 
 sjOverhang             = params.sjOverhang
 snp                    = params.snps
+library_name           = params.library_name
+index_dir              = params.index_dir
 
 genome                 = params.genome
 genes                  = params.genes
 output_dir             = params.output_dir
-data_dir               = params.data_dir
+fastq_dir              = params.fastq_dir
 
 adapters               = params.adapters
 qual_phred             = params.qual_phred
 min_len                = params.min_read_length
+
+//--------------------------------------------------------------------------------------------------------
+// Validation
 
 include { validateParameters; paramsHelp; paramsSummaryLog; fromSamplesheet } from 'plugin/nf-validation'
 
@@ -70,9 +79,27 @@ log.info paramsSummaryLog(workflow)
 //-----------------------------------------------------------------------------------------------------------------------
 // Functions
 
-def getLibraryId( prefix ){
-  // Return the ID number, you can change for other file formats, here it just takes the first part before "_"
-  prefix.split("_")[0]
+def extractCharacters(String inputString, library_name) {
+
+    def intervals = library_name.split(',').collect { it.toInteger() }
+
+    def adjustedStart
+    def adjustedEnd
+
+    if (intervals.size() == 1) {
+        // Single value provided, create 'end'
+        adjustedStart = 0
+        adjustedEnd = inputString.length()
+    } else if (intervals.size() == 2) {
+        // Two values provided, use them as 'start' and 'end'
+        adjustedStart = intervals[0] - 1
+        adjustedEnd = intervals[1]
+    } else {
+        // Invalid input, handle appropriately (e.g., raise an error)
+        throw new IllegalArgumentException("Invalid input provided: $library_name")
+    }
+
+    return inputString.substring(adjustedStart, adjustedEnd)
 }
 
 def is_null(var) {
@@ -101,21 +128,22 @@ switch (workflow_input) {
 	break;
      case ["reads-qc"]:
 	include { run_fastqc; run_multiqc } from './modules/module_read_qc.nf'
-	data_dir = params.data_dir
+	fastq_dir = params.fastq_dir
         output_dir = params.output_dir
-        samples = Channel.fromFilePairs("${data_dir}", type: 'file')
+        samples = Channel.fromFilePairs("${fastq_dir}", type: 'file')
                     .ifEmpty { exit 1, data_dir }
         break;
      case ["align"]:
-	include { run_star_align; run_multiqc } from './modules/module_read_align.nf'
-	include { convert_bed; run_rnaseqc } from './modules/module_align_qc.nf'
+	include { run_star_align_plants; run_multiqc } from './modules/module_read_align.nf'
+	include { convert_bed; run_bam_stats; run_infer_experiment; run_junction_annotation } from './modules/module_align_qc.nf'
 	genes = params.genes
-	data_dir = params.data_dir
+	fastq_dir = params.fastq_dir
 	index_dir = params.index_dir
 	output_dir = params.output_dir
 	sjOverhang = params.sjOverhang
-	samples = Channel.fromFilePairs("${data_dir}", flat: true)
-                .map { prefix, file1, file2 -> tuple(getLibraryId(prefix), file1, file2) }
+        library_name = params.library_name
+	samples = Channel.fromFilePairs("${fastq_dir}", flat: true)
+                .map { prefix, file1, file2 -> tuple(extractCharacters(prefix, library_name), file1, file2) }
                 .groupTuple(sort: true)
 		.ifEmpty { exit 1, data_dir }
 	break;
@@ -150,19 +178,22 @@ workflow READ_QC {
     run_multiqc(fastqc_out)
 }
 
-workflow ALIGN_STAR {
+workflow ALIGN_STAR_PLANTS {
      take:
      samples
 
      main:
-     run_star_align(samples)
-     run_star_align.out.star_reports
+     run_star_align_plants(samples)
+     run_star_align_plants.out.star_reports
         .map { it -> it[1]}
         .flatten()
         .collect()
         .set { reports }
      convert_bed(genes)
-     run_rnaseqc(run_star_align.out.star_alignments, genes)
+     // QC stages
+     run_bam_stats(run_star_align_plants.out.star_alignments, convert_bed.out)
+     run_junction_annotation(run_star_align_plants.out.star_alignments, convert_bed.out)
+     run_infer_experiment(run_star_align_plants.out.star_alignments, convert_bed.out)
      run_multiqc(reports)
 }
 
@@ -179,7 +210,7 @@ workflow {
     		switchVariable = 4;
 	} else if (workflow_input == "reads-qc") {
 		switchVariable = 5;
-	} else if (workflow_input == "align" && (aligner == "star" || aligner == "star-snps")) {
+	} else if (workflow_input == "align" && (aligner == "star-plants" || aligner == "star-snps")) {
 		switchVariable = 6;
 	}
 
@@ -200,7 +231,7 @@ workflow {
 		READ_QC(samples);
 		break;
 	case 6:
-		ALIGN_STAR(samples)
+		ALIGN_STAR_PLANTS(samples)
 		break;
     	default:
         	println("Please provide the correct input options")

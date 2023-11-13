@@ -15,11 +15,12 @@ module load singularity/3.11.4-slurm
 
 nextflow run -resume -profile singularity,pawsey_setonix ./main.nf \
   --workflow align \
-  --aligner star \
+  --aligner star-plants \
   --sjOverhang 149 \
   --genome "/scratch/y95/kgagalova/barley/barley_rnaseq/barley_reference/Morex/genome/Morex_pseudomolecules_v2.fasta" \
   --genes "/scratch/y95/kgagalova/barley/barley_rnaseq/barley_reference/Morex/annotation/Morex.gtf" \
-  --output_dir results2 \
+  --output_dir results \
+  --library_name 1,6 \
   --index_dir "/scratch/y95/kgagalova/barley/barley_rnaseq/alignments/indices/star/Mor/star_index/Morex" \
-  --data_dir "/scratch/y95/kgagalova/barley/barley_rnaseq/trimmed_reads/reads_Mor/*filt_R{1,2}.fastq.gz" 
+  --fastq_dir "/scratch/y95/kgagalova/barley/barley_rnaseq/trimmed_reads/reads_Mor/*filt_R{1,2}.fastq.gz" 
   

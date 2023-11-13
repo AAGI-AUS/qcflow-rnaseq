@@ -9,11 +9,13 @@ output_dir       = params.output_dir
 
 sjOverhang       = params.sjOverhang
 
-process run_star_align {
+process run_star_align_plants {
+
+     // Function uses specific parameters for large and gappy plant genomes (>3Gbp)
      label 'star'     
      tag "Star align reads for ${sample_id}"
 
-     publishDir "${output_dir}/alignment_star", mode: 'copy'
+     publishDir "${output_dir}/alignement", mode: 'copy'
 
      input:
         tuple val(sample_id), path(reads1), path(reads2)
@@ -52,6 +54,34 @@ script:
         --readFilesIn ${reads1.join(",")} ${reads2.join(",")}
         """
 }
+
+process run_hisat {
+
+     label 'hisat_highmem'
+     tag "Star align reads for ${sample_id}"
+     publishDir "${output_dir}/alignement_hisat", mode: 'copy'
+
+     input:
+     tuple val(sample_id), path(reads1), path(reads2)
+     
+     output:
+     tuple val(meta), path("${sample_id}/${sample_id}_Aligned.sortedByCoord.bam"), emit: bam
+     tuple val(meta), path("${sample_id}/${sample_id}.hisat2.summary.log"), emit: summary
+     tuple val(meta), path("${sample_id}/*splicesite.txt"), emit: splicesites
+
+     script:
+     """
+     hisat2 \
+     	-x ${index_dir} \
+     	-1 ${reads1.join(",")} \
+     	-2 ${reads2.join(",")} \\
+     	--summary-file ${sample_id}.hisat2.summary.log \\
+     	--threads ${task.cpus} \
+     	| samtools sort --threads ${task.cpus} -o ${sample_id}/${sample_id}_Aligned.sortedByCoord.bam -
+     """
+}
+
+
 
 process run_multiqc {
     tag { 'multiqc run' }
