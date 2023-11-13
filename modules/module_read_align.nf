@@ -23,7 +23,7 @@ process run_star_align_plants {
         tuple val(sample_id), path(reads1), path(reads2)
 
      output:
-	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: star_alignments
+	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: star_alignements
     	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Log.final.out"), emit: star_reports
 	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_ReadsPerGene.out.tab"), emit: star_counts
 
@@ -87,12 +87,13 @@ process run_hisat {
 
 process run_multiqc {
     tag { 'multiqc run' }
-    publishDir "${output_dir}/", mode: 'copy', overwrite: true
+    publishDir "${output_dir}/multi_qc-${aligner}", mode: 'copy', overwrite: true
 
     input:
     path(dir)
+    val(aligner)
     
     """
-    multiqc . --force --outdir qc_align
+    multiqc . --force --outdir multi_qc-${aligner}
     """
 }
