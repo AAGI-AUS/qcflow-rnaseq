@@ -91,6 +91,7 @@ process run_multiqc {
 
     input:
     path(dir)
+    val()
     
     """
     multiqc . --force --outdir qc_align

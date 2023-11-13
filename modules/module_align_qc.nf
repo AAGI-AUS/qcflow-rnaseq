@@ -24,7 +24,7 @@ process convert_bed {
 
 process run_infer_experiment {
     tag {"rnaseqc - infer experiment: ${sample_id}"}
-    publishDir "${outdir}/align-qc/", mode: 'copy', overwrite: true
+    publishDir "${outdir}/align_rseqc/", mode: 'copy', overwrite: true
 
     input:
     tuple val(sample_id), path(bam)
@@ -44,7 +44,7 @@ process run_infer_experiment {
 process run_bam_stats {
     
     tag {"rnaseqc - bam stats: ${sample_id}"}
-    publishDir "${outdir}/align-qc/", mode: 'copy', overwrite: true
+    publishDir "${outdir}/align_rseqc/", mode: 'copy', overwrite: true
 
     input:
     tuple val(sample_id), path(bam)
@@ -65,7 +65,7 @@ process run_bam_stats {
 process run_junction_annotation {
 
     tag {"rnaseqc - junction annotation: ${sample_id}"}
-    publishDir "${outdir}/align-qc/", mode: 'copy', overwrite: true
+    publishDir "${outdir}/align_rseqc/", mode: 'copy', overwrite: true
 
     input:
     tuple val(sample_id), path(bam)
