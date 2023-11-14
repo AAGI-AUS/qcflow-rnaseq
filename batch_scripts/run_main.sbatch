@@ -21,7 +21,7 @@ nextflow run -resume -process.scratch true -profile singularity,pawsey_setonix .
   --genes "/scratch/y95/kgagalova/barley/barley_rnaseq/barley_reference/Morex/annotation/Morex.gtf" \
   --output_dir results \
   --library_name 1,6 \
-  --index_dir "/scratch/y95/kgagalova/barley/barley_rnaseq/alignments/indices/hisat/Mor/hisat_index" \
-  --prefix_hisat "hisat_index" \
-  --fastq_dir "/scratch/y95/kgagalova/barley/barley_rnaseq/trimmed_reads/reads_Mor/*filt_R{1,2}.fastq.gz" 
+  --index_dir "/scratch/y95/kgagalova/barley/barley_rnaseq/alignments/indices/hisat/Aka/hisat_index" \
+  --hisat_prefix hisat_index \
+  --fastq_dir "/scratch/y95/kgagalova/barley/barley_rnaseq/trimmed_reads/reads_Aka/*filt_R{1,2}.fastq.gz" 
   
