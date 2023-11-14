@@ -176,6 +176,7 @@ workflow GENOME_INDEX {
 	run_star_index()
      } else if (aligner == "star-snps") {
 	run_star_index_snps()
+     }
 }
 
 workflow READ_QC {

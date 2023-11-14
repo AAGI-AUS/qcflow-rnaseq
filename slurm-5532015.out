@@ -1,0 +1,13 @@
+N E X T F L O W  ~  version 23.04.3
+WARN: It appears you have never run this project before -- Option `-resume` is ignored
+Launching `./main.nf` [happy_ampere] DSL2 - revision: 000c2dbf74
+ERROR ~ Script compilation error
+- file : /scratch/y95/kgagalova/barley/barley_rnaseq/alignments/alignments/hisat/qcflow-rnaseq/main.nf
+- cause: Unexpected input: '{' @ line 168, column 23.
+   workflow GENOME_INDEX {
+                         ^
+
+1 error
+
+
+ -- Check '.nextflow.log' file for details
