@@ -2,20 +2,20 @@
 
 nextflow.enable.dsl=2
 
-genome           = params.genome
-genes            = params.genes
+//genes            = params.genes
 index_dir        = params.index_dir
 output_dir       = params.output_dir
-workflow         = params.workflow
-
+hisat_prefix     = params.hisat_prefix
+algner           = params.aligner
 
 sjOverhang       = params.sjOverhang
 
 process run_star_align_plants {
 
      // Function uses specific parameters for large and gappy plant genomes (>3Gbp)
-     label 'star'     
+     //label 'star'     
      tag "Star align reads for ${sample_id}"
+     
 
      publishDir "${output_dir}/alignements", mode: 'copy'
 
@@ -23,13 +23,13 @@ process run_star_align_plants {
         tuple val(sample_id), path(reads1), path(reads2)
 
      output:
-	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: star_alignements
-    	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Log.final.out"), emit: star_reports
-	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_ReadsPerGene.out.tab"), emit: star_counts
+	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: alignements
+	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Log.final.out"), emit: reports
+	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_ReadsPerGene.out.tab"), emit: counts
 
      script:
         """
-        STAR --runThreadN ${task.cpus} \
+        STAR --runThreadN 16 \
         --runMode alignReads \
         --readFilesCommand zcat \
         --sjdbScore 2 \
@@ -65,17 +65,28 @@ process run_hisat_align {
 
      input:
      tuple val(sample_id), path(reads1), path(reads2)
+     path(index_dir)
+     path(genes)
      
      output:
-     tuple val(meta), path("hisat_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.bam"), emit: hisat_alignements
-     tuple val(meta), path("hisat_aligned/${sample_id}/${sample_id}.hisat2.summary.log"), emit: hisat_reports
-     tuple val(meta), path("hisat_aligned/${sample_id}/*splicesite.txt"), emit: splicesites
-
+     tuple val(sample_id), path("hisat_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: alignements
+     tuple val(sample_id), path("hisat_aligned/${sample_id}/${sample_id}.hisat.summary.log"), emit: reports
+     tuple val(sample_id), path("hisat_aligned/${sample_id}/*splicesite.txt"), emit: splicesites
+     
      script:
-     """
-     mkdir -p hisat_aligned/${sample_id}
-     hisat2 -x ${index_dir} -1 ${reads1.join(",")} -2 ${reads2.join(",")} --summary-file ${sample_id}.hisat.summary.log --rna-strandness FR --dta --threads ${task.cpus} -S hisat_aligned/${sample_id}/test.bam 
-     """
+	"""
+	mkdir -p hisat_aligned/${sample_id}
+	hisat2_extract_splice_sites.py $genes > splicesites.tsv
+	
+	hisat2 \\
+	-x $index_dir/${hisat_prefix} \\
+	-1 ${reads1.join(",")} \\
+	-2 ${reads2.join(",")} \\
+	--known-splicesite-infile splicesites.tsv \\
+	--summary-file hisat_aligned/${sample_id}/${sample_id}.hisat.summary.log \\
+	--rna-strandness FR --dta --threads 16 \\
+	| samtools view -bS -F 4 -F 256 - | samtools sort - -o hisat_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam
+	"""
 }
 
 

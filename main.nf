@@ -25,7 +25,7 @@ config_profile_contact       = null
 config_profile_url           = null
 
 params.workflow              = "all"
-params.aligner 	             = "star"
+params.aligner	             = "star"
 
 // STAR index
 params.sjOverhang            = 149
@@ -98,7 +98,6 @@ def extractCharacters(String inputString, library_name) {
         // Invalid input, handle appropriately (e.g., raise an error)
         throw new IllegalArgumentException("Invalid input provided: $library_name")
     }
-
     return inputString.substring(adjustedStart, adjustedEnd)
 }
 
@@ -132,49 +131,51 @@ switch (workflow_input) {
 	output_dir = params.output_dir
 	snp = params.snps
         break;
-    case ["read-trimming"]:
-	include { process_reads_fastp; run_fastqc; run_multiqc } from './modules/module_read_trimming.nf'
-	adapters = params.adapters
-	qual_phred = params.qual_phred
-	min_len = params.min_read_length
+    case ["trim"]:
+	include { run_fastp; run_fastqc; run_multiqc } from './modules/module_read_trimming.nf'
+	//adapters = params.adapters
+	//qual_phred = params.qual_phred
+	//min_len = params.min_read_length
+	adapters = Channel.FromPath(params.adapters)
+	samples = Channel.fromFilePairs("${fastq_dir}", type: 'file')
+                    .ifEmpty { exit 1, fastq_dir }
 	break;
      case ["reads-qc"]:
 	include { run_fastqc; run_multiqc_reads } from './modules/module_read_qc.nf'
 	fastq_dir = params.fastq_dir
-        output_dir = params.output_dir
+        //output_dir = params.output_dir
         samples = Channel.fromFilePairs("${fastq_dir}", type: 'file')
                     .ifEmpty { exit 1, fastq_dir }
         break;
      case ["align"]:
-	include { run_star_align_plants; run_multiqc; run_hisat_align } from './modules/module_read_align.nf'
-	include { convert_bed; run_bam_stats; run_infer_experiment; run_junction_annotation } from './modules/module_align_qc.nf'
-	genes = params.genes
+	include { run_star_align_plants; run_hisat_align; run_multiqc } from './modules/module_read_align.nf'
+	//include { convert_bed; run_bam_stats; run_infer_experiment; run_junction_annotation } from './modules/module_align_qc.nf'
+	//genes = params.genes
 	fastq_dir = params.fastq_dir
-	index_dir = params.index_dir
-	output_dir = params.output_dir
-	sjOverhang = params.sjOverhang
+	//index_dir = params.index_dir
+	//output_dir = params.output_dir
+	//sjOverhang = params.sjOverhang
         library_name = params.library_name
+	genes = Channel.fromPath(params.genes)
 	samples = Channel.fromFilePairs("${fastq_dir}", flat: true)
-                .map { prefix, file1, file2 -> tuple(extractCharacters(prefix, library_name), file1, file2) }
+                .map { prefix, file1, file2 -> tuple(extractCharacters(prefix,"${library_name}"), file1, file2) }
                 .groupTuple(sort: true)
-		.ifEmpty { exit 1, fastq_dir }
+                .ifEmpty { exit 1, fastq_dir }
 	break;
 }
 
 
-workflow GENOME_INDEXING_STAR {
+workflow GENOME_INDEX {
     main:
-    run_star_index()
-}
 
-workflow GENOME_INDEXING_STAR_SNPS {
-    main:
-    run_star_index_snps()
-}
-
-workflow GENOME_INDEXING_HISATHIGHMEM {
-    main:
-    run_hisat_index_high_mem()
+    if (aligner == "hisat-highmem") {
+	run_hisat_index_high_mem()
+     } else if (aligner == "hisat") {
+	run_hisat_index_()
+     } else if (aligner == "star")  {
+	run_star_index()
+     } else if (aligner == "star-snps") {
+	run_star_index_snps()
 }
 
 workflow READ_QC {
@@ -190,88 +191,75 @@ workflow READ_QC {
     run_multiqc_reads(fastqc_out)
 }
 
-workflow ALIGN_STAR_PLANTS {
-     take:
-     samples
-
-     main:
-     run_star_align_plants(samples)
-     run_star_align_plants.out.star_reports
-        .map { it -> it[1]}
-        .flatten()
-        .collect()
-        .set { reports }
-     convert_bed(genes)
-     // QC stages
-     run_bam_stats(run_star_align_plants.out.star_alignements, convert_bed.out)
-     run_junction_annotation(run_star_align_plants.out.star_alignements, convert_bed.out)
-     run_infer_experiment(run_star_align_plants.out.star_alignements, convert_bed.out)
-     run_multiqc(reports, selectTool(params.aligner))
-}
-
-
-workflow ALIGN_HISAT {
+workflow TRIM_READS {
     take:
     samples
+    adapters
 
     main:
-    run_hisat_align(samples)
-    run_hisat_align.out.hisat_reports
-        .map { it -> it[1]}
-        .flatten()
-        .collect()
-        .set { reports }
-     convert_bed(genes)
-     // QC stages
-     run_bam_stats(run_hisat_align.out.hisat_alignements, convert_bed.out)
-     run_junction_annotation(run_hisat_align.out.hisat_alignements, convert_bed.out)
-     run_infer_experiment(run_hisat_align.out.hisat_alignements, convert_bed.out)
-     run_multiqc(reports, selectTool(params.aligner))
+    fastp_out = run_fastp(samples, adapters)
+    fastqc_trimmed_out = run_fastqc(fastp_out.trimmed_reads)
+    run_multiqc(fastp_out.json.mix(fastqc_trimmed_out).collect())
 }
+
+workflow ALIGN_READS {
+     take:
+     samples
+     aligner
+     genes
+
+     main:
+     Channel.fromPath( params.index_dir ).set{ index }
+
+     if (aligner == "star-plants") {
+	run_star_align_plants(samples, index, genes)
+
+     } else if (aligner == "hisat") {
+	run_hisat_align(samples, index, genes)
+     }
+     
+     //run_star_align_plants(samples)
+     //run_star_align_plants.out.star_reports
+     //   .map { it -> it[1]}
+     //   .flatten()
+     //   .collect()
+     //   .set { reports }
+     //convert_bed(genes)
+     // QC stages
+     //run_bam_stats(run_star_align_plants.out.star_alignements, convert_bed.out)
+     //run_junction_annotation(run_star_align_plants.out.star_alignements, convert_bed.out)
+     //run_infer_experiment(run_star_align_plants.out.star_alignements, convert_bed.out)
+     //run_multiqc(reports, selectTool(params.aligner))
+}
+
 
 workflow {
 	switchVariable = 0
 	
-	if (workflow_input == "genome-index" && aligner == "star") {
-    		switchVariable = 1;
-	} else if (workflow_input == "genome-index" && aligner == "star-snps" && !is_null(snps)){
-                switchVariable = 2;
-	} else if (workflow_input == "genome-index" && aligner == "hisat") {
-   		switchVariable = 3;
-	} else if (workflow_input == "genome-index" && aligner == "hisat-highmem") {
-    		switchVariable = 4;
+	if (workflow_input == "genome-index") {
+		switchVariable = 1;
 	} else if (workflow_input == "reads-qc") {
-		switchVariable = 5;
-	} else if (workflow_input == "align" && (aligner == "star-plants" || aligner == "star-snps")) {
-		switchVariable = 6;
-	} else if (workflow_input == "align" && (aligner == "hisat" || aligner == "hisat-highmem")) {
-		switchVariable = 7;
+		switchVariable = 2;
+	} else if (workflow_input == "trim") {
+		switchVariable = 3;
+	} else if (workflow_input == "align") {
+		switchVariable = 4;
 	}
-
 	switch (switchVariable) {
-    	case 1:
-        	GENOME_INDEXING_STAR();
-        	break;
-    	case 2:
-		GENOME_INDEXING_STAR_SNPS();
+	case 1:
+		GENOME_INDEX();
 		break;
-	case 3:
-        	GENOME_INDEXING_HISAT();
-        	break;
-    	case 4:
-        	GENOME_INDEXING_HISATHIGHMEM();
-        	break;
-	case 5:
+	case 2:
 		READ_QC(samples);
 		break;
-	case 6:
-		ALIGN_STAR_PLANTS(samples)
+	case 3:
+		TRIM_READS(samples, adapters)
 		break;
-	case 7:
-		ALIGN_HISAT(samples)
+	case 4:
+		ALIGN_READS(samples, aligner, genes)
 		break;
-    	default:
-        	println("Please provide the correct input options")
+	default:
+		println("Please provide the correct input options")
 		break;
 	}
 }
