@@ -149,7 +149,7 @@ switch (workflow_input) {
         break;
      case ["align"]:
 	include { run_star_align_plants; run_hisat_align; run_multiqc } from './modules/module_read_align.nf'
-	//include { convert_bed; run_bam_stats; run_infer_experiment; run_junction_annotation } from './modules/module_align_qc.nf'
+	include { convert_bed; run_bam_stats; run_infer_experiment; run_junction_annotation } from './modules/module_align_qc.nf'
 	//genes = params.genes
 	fastq_dir = params.fastq_dir
 	//index_dir = params.index_dir
