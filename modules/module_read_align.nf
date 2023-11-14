@@ -29,7 +29,7 @@ process run_star_align_plants {
 
      script:
         """
-        STAR --runThreadN 16 \
+        STAR --runThreadN ${task.cpus} \
         --runMode alignReads \
         --readFilesCommand zcat \
         --sjdbScore 2 \
@@ -84,7 +84,7 @@ process run_hisat_align {
 	-2 ${reads2.join(",")} \\
 	--known-splicesite-infile splicesites.tsv \\
 	--summary-file hisat_aligned/${sample_id}/${sample_id}.hisat.summary.log \\
-	--rna-strandness FR --dta --threads 16 \\
+	--rna-strandness FR --dta --threads ${task.cpus} \\
 	| samtools view -bS -F 4 -F 256 - | samtools sort - -o hisat_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam
 	"""
 }

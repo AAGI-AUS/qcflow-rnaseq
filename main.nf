@@ -212,24 +212,23 @@ workflow ALIGN_READS {
      Channel.fromPath( params.index_dir ).set{ index }
 
      if (aligner == "star-plants") {
-	run_star_align_plants(samples, index, genes)
+	output_align = run_star_align_plants(samples, index, genes)
 
      } else if (aligner == "hisat") {
-	run_hisat_align(samples, index, genes)
+	output_align = run_hisat_align(samples, index, genes)
      }
      
-     //run_star_align_plants(samples)
-     //run_star_align_plants.out.star_reports
-     //   .map { it -> it[1]}
-     //   .flatten()
-     //   .collect()
-     //   .set { reports }
-     //convert_bed(genes)
+     output_align.reports
+        .map { it -> it[1]}
+        .flatten()
+        .collect()
+        .set { reports }
+     convert_bed(genes)
      // QC stages
-     //run_bam_stats(run_star_align_plants.out.star_alignements, convert_bed.out)
-     //run_junction_annotation(run_star_align_plants.out.star_alignements, convert_bed.out)
-     //run_infer_experiment(run_star_align_plants.out.star_alignements, convert_bed.out)
-     //run_multiqc(reports, selectTool(params.aligner))
+     run_bam_stats(output_align.alignements, convert_bed.out)
+     run_junction_annotation(output_align.alignements, convert_bed.out)
+     run_infer_experiment(output_align.alignements, convert_bed.out)
+     run_multiqc(reports, selectTool(params.aligner))
 }
 
 
