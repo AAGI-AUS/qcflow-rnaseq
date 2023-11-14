@@ -69,7 +69,7 @@ min_len                = params.min_read_length
 include { validateParameters; paramsHelp; paramsSummaryLog; fromSamplesheet } from 'plugin/nf-validation'
 
 if (params.help) {
-   log.info paramsHelp("nextflow run ./main.nf ...")
+   log.info paramsHelp("nextflow run main.nf --outdir dir_name --inputdir_fastq dir_name/*_R{1,2}.fastq.gz")
    exit 0
 }
 
@@ -136,20 +136,28 @@ switch (workflow_input) {
         break;
     case ["trim"]:
 	include { run_fastp; run_fastqc; run_multiqc } from './modules/module_read_trimming.nf'
-	adapters = file(params.adapters)
+	//adapters = params.adapters
+	//qual_phred = params.qual_phred
+	//min_len = params.min_read_length
+	adapters = Channel.FromPath(params.adapters)
 	samples = Channel.fromFilePairs("${fastq_dir}", type: 'file')
                     .ifEmpty { exit 1, fastq_dir }
 	break;
      case ["reads-qc"]:
 	include { run_fastqc; run_multiqc_reads } from './modules/module_read_qc.nf'
 	fastq_dir = params.fastq_dir
+        //output_dir = params.output_dir
         samples = Channel.fromFilePairs("${fastq_dir}", type: 'file')
                     .ifEmpty { exit 1, fastq_dir }
         break;
      case ["align"]:
 	include { run_star_align_plants; run_hisat_align; run_multiqc } from './modules/module_read_align.nf'
 	include { convert_bed; run_bam_stats; run_infer_experiment; run_junction_annotation } from './modules/module_align_qc.nf'
+	//genes = params.genes
 	fastq_dir = params.fastq_dir
+	//index_dir = params.index_dir
+	//output_dir = params.output_dir
+	//sjOverhang = params.sjOverhang
         library_name = params.library_name
 	genes = file(params.genes)
 	index = file(params.index_dir)

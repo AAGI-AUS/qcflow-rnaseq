@@ -158,9 +158,6 @@
         }
     ],
     "properties": {
-        "new_param_1": {
-            "type": "string"
-        },
         "snps": {
             "type": "string",
             "description": "Vcf file (uncompressed) with snps to include to indexing. Must be the same regerence as genome"
@@ -176,7 +173,7 @@
         },
         "hisat_prefix": {
             "type": "string",
-            "default": ".hisat_index",
+            "default": "hisat_index",
             "description": "Prefix of hisat index"
         }
     }

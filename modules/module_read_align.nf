@@ -13,7 +13,7 @@ sjOverhang       = params.sjOverhang
 process run_star_align_plants {
 
      // Function uses specific parameters for large and gappy plant genomes (>3Gbp)
-     //label 'star'     
+     label 'star'     
      tag "Star align reads for ${sample_id}"
      
 
@@ -21,11 +21,12 @@ process run_star_align_plants {
 
      input:
         tuple val(sample_id), path(reads1), path(reads2)
+	val(index_dir)
+	val(genes)
 
      output:
 	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: alignements
 	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Log.final.out"), emit: reports
-	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_ReadsPerGene.out.tab"), emit: counts
 
      script:
         """
@@ -51,8 +52,8 @@ process run_star_align_plants {
         --twopassMode Basic \
         --outTmpDir star_aligned/${sample_id}/_STARtmp \
         --outFileNamePrefix star_aligned/${sample_id}/${sample_id}_ \
-        --genomeDir ${index_dir} \
-        --sjdbGTFfile ${genes} \
+        --genomeDir $index_dir \
+        --sjdbGTFfile $genes \
         --readFilesIn ${reads1.join(",")} ${reads2.join(",")}
         """
 }
@@ -65,26 +66,25 @@ process run_hisat_align {
 
      input:
      tuple val(sample_id), path(reads1), path(reads2)
-     path(index_dir)
-     path(genes)
+     val(index_dir)
+     val(genes)
      
      output:
      tuple val(sample_id), path("hisat_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: alignements
      tuple val(sample_id), path("hisat_aligned/${sample_id}/${sample_id}.hisat.summary.log"), emit: reports
-     tuple val(sample_id), path("hisat_aligned/${sample_id}/*splicesite.txt"), emit: splicesites
      
      script:
 	"""
 	mkdir -p hisat_aligned/${sample_id}
 	hisat2_extract_splice_sites.py $genes > splicesites.tsv
 	
-	hisat2 \\
-	-x $index_dir/${hisat_prefix} \\
-	-1 ${reads1.join(",")} \\
-	-2 ${reads2.join(",")} \\
-	--known-splicesite-infile splicesites.tsv \\
-	--summary-file hisat_aligned/${sample_id}/${sample_id}.hisat.summary.log \\
-	--rna-strandness FR --dta --threads ${task.cpus} \\
+	hisat2 \
+	-x $index_dir/${hisat_prefix} \
+	-1 ${reads1.join(",")} \
+	-2 ${reads2.join(",")} \
+	--known-splicesite-infile splicesites.tsv \
+	--summary-file hisat_aligned/${sample_id}/${sample_id}.hisat.summary.log \
+	--rna-strandness FR --dta --threads ${task.cpus} \
 	| samtools view -bS -F 4 -F 256 - | samtools sort - -o hisat_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam
 	"""
 }
