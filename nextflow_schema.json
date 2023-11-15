@@ -69,7 +69,7 @@
                 "adapters": {
                     "type": "string",
                     "description": "File containing adaters to trim",
-                    "default": "data/truseq_adapters.fasta"
+                    "default": "./data/truseq_adapters.fasta"
                 },
                 "min_read_length": {
                     "type": "number",

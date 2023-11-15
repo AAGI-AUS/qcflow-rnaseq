@@ -39,7 +39,7 @@ params.index_dir             = null
 params.hisat_prefix          = "hisat_index"
 
 // Fastp params
-params.adapters              = "data/truseq_adapters.fasta"
+params.adapters              = "$PWD/data/truseq_adapters.fasta"
 params.qual_phred            = 20
 params.min_read_length       = 50
 
@@ -195,8 +195,13 @@ workflow TRIM_READS {
 
     main:
     fastp_out = run_fastp(samples, adapters)
+    fastp_out.json
+        .map { it -> it[1] }
+        .collect()
+        .set { fastp_json }
+
     fastqc_trimmed_out = run_fastqc(fastp_out.trimmed_reads)
-    run_multiqc(fastp_out.json.mix(fastqc_trimmed_out).collect())
+    run_multiqc(fastp_json.mix(fastqc_trimmed_out).collect())
 }
 
 workflow ALIGN_READS {

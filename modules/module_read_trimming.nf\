@@ -60,7 +60,6 @@ process run_fastqc {
 
 process run_multiqc {
 
-    tag { 'multiqc run' }
     publishDir params.output_dir, mode: 'copy'
 
     input:
@@ -68,10 +67,10 @@ process run_multiqc {
         //path "multiqc.config"
 
     output:
-	path("multi_qc-reads"), emit: multiQC
+        file("multiqc/multiqc_report.html")
 
     script:
     """
-    multiqc ${x} --force --outdir multi_qc-reads 
+    multiqc ${x} --filename "multiqc/multiqc_report.html" 
     """
 }
