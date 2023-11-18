@@ -1,4 +1,4 @@
-FROM mambaorg/micromamba:0.25.1
+FROM mambaorg/micromamba:1.5.3
 
 LABEL image.author.name "Kristina K. Gagalova"
 LABEL image.author.email "kristina.gagalova@curtin.edu.au"

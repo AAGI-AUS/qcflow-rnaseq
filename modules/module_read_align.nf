@@ -2,13 +2,47 @@
 
 nextflow.enable.dsl=2
 
-//genes            = params.genes
 index_dir        = params.index_dir
 output_dir       = params.output_dir
 hisat_prefix     = params.hisat_prefix
 algner           = params.aligner
 
 sjOverhang       = params.sjOverhang
+
+process run_star_align {
+     
+     label 'star'
+     tag "Star align reads for ${sample_id}"
+
+     output:
+        tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: alignements
+        tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Log.final.out"), emit: reports
+
+     input:
+        tuple val(sample_id), path(reads1), path(reads2)
+        val(index_dir)
+        val(genes)
+     
+     script:
+	"""
+	STAR --runThreadN ${task.cpus} \
+	--runMode alignReads \
+        --readFilesCommand zcat \
+        --sjdbOverhang ${sjOverhang} \
+        --outSAMunmapped Within \
+        --outFilterType BySJout \
+        --outSAMattributes NH HI AS NM MD \
+        --outSAMtype BAM SortedByCoordinate \
+        --quantMode GeneCounts \
+        --twopassMode Basic \
+        --outTmpDir star_aligned/${sample_id}/_STARtmp \
+        --outFileNamePrefix star_aligned/${sample_id}/${sample_id}_ \
+        --genomeDir $index_dir \
+        --sjdbGTFfile $genes \
+        --readFilesIn ${reads1.join(",")} ${reads2.join(",")}
+     """
+}
+
 
 process run_star_align_plants {
 
@@ -25,8 +59,8 @@ process run_star_align_plants {
 	val(genes)
 
      output:
-	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: alignements
-	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Log.final.out"), emit: reports
+	tuple val(sample_id), path("star_aligned_plants/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: alignements
+	tuple val(sample_id), path("star_aligned_plants/${sample_id}/${sample_id}_Log.final.out"), emit: reports
 
      script:
         """
@@ -50,8 +84,8 @@ process run_star_align_plants {
         --outSAMtype BAM SortedByCoordinate \
         --quantMode GeneCounts \
         --twopassMode Basic \
-        --outTmpDir star_aligned/${sample_id}/_STARtmp \
-        --outFileNamePrefix star_aligned/${sample_id}/${sample_id}_ \
+        --outTmpDir star_aligned_plants/${sample_id}/_STARtmp \
+        --outFileNamePrefix star_aligned_plants/${sample_id}/${sample_id}_ \
         --genomeDir $index_dir \
         --sjdbGTFfile $genes \
         --readFilesIn ${reads1.join(",")} ${reads2.join(",")}

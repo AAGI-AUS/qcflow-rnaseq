@@ -43,25 +43,8 @@ params.adapters              = "$PWD/data/truseq_adapters.fasta"
 params.qual_phred            = 20
 params.min_read_length       = 50
 
-//--------------------------------------------------------------------------------------------------------
-// Replace values
-
-workflow_input         = params.workflow
-aligner                = params.aligner
-
-sjOverhang             = params.sjOverhang
-snp                    = params.snps
-library_name           = params.library_name
-index_dir              = params.index_dir
-
-genome                 = params.genome
-genes                  = params.genes
-output_dir             = params.output_dir
-fastq_dir              = params.fastq_dir
-
-adapters               = params.adapters
-qual_phred             = params.qual_phred
-min_len                = params.min_read_length
+// Infer experiment params
+params.cdna                  = null
 
 //--------------------------------------------------------------------------------------------------------
 // Validation
@@ -116,7 +99,7 @@ def selectTool(inputParameter) {
    selectedTool = ""
    if (inputParameter in ["star", "star-plants", "star-snps"]) {
         selectedTool = "star"
-   } else if (inputParameter in ["hisat", "hisat_highmem"]) {
+   } else if (inputParameter in ["hisat", "hisat-snps", "hisat_highmem"]) {
         selectedTool = "hisat"
    } else {
         selectedTool = "reads"
@@ -124,7 +107,7 @@ def selectTool(inputParameter) {
    return selectedTool
 }
 
-
+workflow_input = params.workflow
 switch (workflow_input) {
     case ["genome-index"]:
         include { run_star_index; run_star_index_snps; run_hisat_index; run_hisat_index_high_mem } from './modules/module_prep_index.nf'
@@ -147,7 +130,7 @@ switch (workflow_input) {
                     .ifEmpty { exit 1, fastq_dir }
         break;
      case ["align"]:
-	include { run_star_align_plants; run_hisat_align; run_multiqc } from './modules/module_read_align.nf'
+	include { run_star_align_plants; run_star_align; run_hisat_align; run_multiqc } from './modules/module_read_align.nf'
 	include { convert_bed; run_bam_stats; run_infer_experiment; run_junction_annotation } from './modules/module_align_qc.nf'
 	fastq_dir = params.fastq_dir
         library_name = params.library_name
@@ -158,6 +141,14 @@ switch (workflow_input) {
                 .groupTuple(sort: true)
                 .ifEmpty { exit 1, fastq_dir }
 	break;
+      case ["infer-strandedness"]:
+	include { run_check_strandedness } from './modules/module_align_qc.nf'
+	cdna = params.cdna
+	fastq_dir = params.fastq_dir
+	genes = file(params.genes)
+	samples = Channel.fromFilePairs("${fastq_dir}", type:'file', size: 2)
+		.ifEmpty { exit 1, fastq_dir }
+	break;
 }
 
 
@@ -167,7 +158,9 @@ workflow GENOME_INDEX {
     if (aligner == "hisat-highmem") {
 	run_hisat_index_high_mem()
      } else if (aligner == "hisat") {
-	run_hisat_index_()
+	run_hisat_index() 
+     } else if (aligner == "hisat-snps") {
+	run_hisat_index_snps()
      } else if (aligner == "star")  {
 	run_star_index()
      } else if (aligner == "star-snps") {
@@ -212,9 +205,10 @@ workflow ALIGN_READS {
 
      main:
 
-     if (aligner == "star-plants") {
+     if (aligner == "star") {
+	output_align = run_star_align(samples_align, index, genes)
+     } else if (aligner == "star-plants") {
 	output_align = run_star_align_plants(samples_align, index, genes)
-
      } else if (aligner == "hisat") {
 	output_align = run_hisat_align(samples_align, index, genes)
      }
@@ -228,10 +222,19 @@ workflow ALIGN_READS {
      // QC stages
      run_bam_stats(output_align.alignements, convert_bed.out)
      run_junction_annotation(output_align.alignements, convert_bed.out)
-     run_infer_experiment(output_align.alignements, convert_bed.out)
+
      run_multiqc(reports, selectTool(params.aligner))
 }
 
+workflow INFER_STRANDEDNESS {
+    take:
+    cdna
+    genes
+    samples
+
+    main:
+    run_check_strandedness(genes, cdna, samples)
+}
 
 workflow {
 	switchVariable = 0
@@ -244,7 +247,10 @@ workflow {
 		switchVariable = 3;
 	} else if (workflow_input == "align") {
 		switchVariable = 4;
+	} else if (workflow_input == "infer-strandedness") {
+		switchVariable = 5;
 	}
+ 
 	switch (switchVariable) {
 	case 1:
 		GENOME_INDEX();
@@ -257,6 +263,9 @@ workflow {
 		break;
 	case 4:
 		ALIGN_READS(samples_align, aligner, genes)
+		break;
+	case 5:
+		INFER_STRANDEDNESS(cdna, genes, samples)
 		break;
 	default:
 		println("Please provide the correct input options")

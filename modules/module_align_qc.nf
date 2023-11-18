@@ -21,8 +21,7 @@ process convert_bed {
     """
 }
 
-
-process run_infer_experiment {
+process run_infer_experiment_rseqc {
     tag {"rnaseqc - infer experiment: ${sample_id}"}
     publishDir "${outdir}/align_rseqc/", mode: 'copy', overwrite: true
 
@@ -39,6 +38,26 @@ process run_infer_experiment {
 
     infer_experiment.py -i $bam -r $genes > infer_experiment/${sample_id}_infer-experiment.out
     """
+}
+
+process run_check_strandedness {
+
+    tag { "check_strandedness: ${sample_id}"  }    
+    publishDir "${outdir}/check_strandedness/", mode: 'copy', overwrite: true
+
+    input:
+    val(genes)
+    val(cdna)
+    tuple val(sample_id), path(reads)
+
+    output:
+    tuple val(sample_id), path("${sample_id}_check-strandedness.out")
+
+    script:
+    """
+    check_strandedness -g $genes -fa $cdna -r1 ${reads[0]} -r2 ${reads[1]} > ${sample_id}_check-strandedness.out
+    """
+
 }
 
 process run_bam_stats {

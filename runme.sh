@@ -7,7 +7,7 @@ fi
 
 # alignment example
 nextflow run -resume -profile singularity,pawsey_nimbus,c16r64 ./main.nf \
-  --workflow trim \
+  --workflow infer-strandedness \
   --aligner hisat \
   --sjOverhang 149 \
   --genome "/home/ubuntu/Documents/genome/Morex_pseudomolecules_v2.fasta" \
@@ -16,4 +16,5 @@ nextflow run -resume -profile singularity,pawsey_nimbus,c16r64 ./main.nf \
   --library_name 1,6 \
   --index_dir "/home/ubuntu/Documents/barley/rnaseq/alignments/hisat_indices/Morex/" \
   --hisat_prefix "hisat_index" \
-  --fastq_dir "/home/ubuntu/Documents/barley/rnaseq/raw_reads/test_runs/*_R{1,2}.fastq.gz"
+  --fastq_dir "/home/ubuntu/Documents/barley/rnaseq/raw_reads/test_runs/HPR453_227325LT3_GAACTGAGCG-TCGTGGAGCG_L001_{R1,R2}.fastq.gz" \
+  --cdna /home/ubuntu/Documents/genome/Morex.cds.fasta
