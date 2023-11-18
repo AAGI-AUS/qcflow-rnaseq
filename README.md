@@ -9,6 +9,7 @@ The pipeline runs the following:
 * Fastp for general reads statistics and trimming
 * Star or Hisat for alignment
 * RSeQC for alignment quality control
+* how_are_we_stranded_here for library strandedness 
 * Biobloomtools for contamination screening (TBD)
 
 The pipeline is meant to be executed on the Pawsey-Setonix supercomputer and Nimbus VM. Please get in touch if you want more configurations.       
@@ -19,16 +20,18 @@ The pipeline is meant to be executed on the Pawsey-Setonix supercomputer and Nim
 | ----------- | ----------- |-----------|
 | genome-index | Generate genomic index | star,hisat |
 | read-trimming | Trim input reads and output QC | fastp,fastqc,multiqc |
-| reads-qc | Perform QC on input reads | fastqc, multiqc |
-| align | Align RNAseq short reads and output counts | star or hisat,multiqc,rnaseqc,featureCounts|
+| reads-qc | Perform QC on input reads | fastqc,multiqc |
+| align | Align RNAseq short reads and output counts | star or hisat,multiqc,rnaseqc,(HTseq)|
+| infer-strandedness | Infer RNAseq library preparation strandedness | how_are_we_stranded_here | 
 
 | Aligner     | Description | Software  |
 | ----------- | ----------- |-----------|
-| star | 2 pass star aligner (default) | star |
+| star | 2 pass star aligner default | star |
 | star-plants | 2 pass star aligner tuned for plant genomes | star |
 | star-snps | [Star consensus](https://github.com/alexdobin/STAR/blob/master/CHANGES.md#star-277a-----20201228) aligner | star |
-| hisat | Hisat aligner (default) | fastqc, multiqc |
+| hisat | Hisat aligner default | fastqc,multiqc |
 | hisat-highmem | Hisat high-memory aligner | hisat |
+
 
 ## Multi library alignment
 

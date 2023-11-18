@@ -17,6 +17,7 @@ process run_star_align {
      output:
         tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: alignements
         tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Log.final.out"), emit: reports
+	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_ReadsPerGene.out.tab"), emit: counts
 
      input:
         tuple val(sample_id), path(reads1), path(reads2)
@@ -61,6 +62,7 @@ process run_star_align_plants {
      output:
 	tuple val(sample_id), path("star_aligned_plants/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: alignements
 	tuple val(sample_id), path("star_aligned_plants/${sample_id}/${sample_id}_Log.final.out"), emit: reports
+	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_ReadsPerGene.out.tab"), emit: counts
 
      script:
         """

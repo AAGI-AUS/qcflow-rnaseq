@@ -46,6 +46,8 @@ params.min_read_length       = 50
 // Infer experiment params
 params.cdna                  = null
 
+params.strandedness          = "RF"
+
 //--------------------------------------------------------------------------------------------------------
 // Validation
 
@@ -131,11 +133,14 @@ switch (workflow_input) {
         break;
      case ["align"]:
 	include { run_star_align_plants; run_star_align; run_hisat_align; run_multiqc } from './modules/module_read_align.nf'
-	include { convert_bed; run_bam_stats; run_infer_experiment; run_junction_annotation } from './modules/module_align_qc.nf'
+	include { convert_bed; run_bam_stats; run_junction_annotation } from './modules/module_align_qc.nf'
+	include { combine_counts_star } from './modules/module_aligncounts.nf'
+	strandedness = params.strandedness
 	fastq_dir = params.fastq_dir
         library_name = params.library_name
 	genes = file(params.genes)
 	index = file(params.index_dir)
+	aligner = params.aligner
 	samples_align = Channel.fromFilePairs(fastq_dir, flat: true)
 		.map { prefix, file1, file2 -> tuple(extractCharacters(prefix,library_name), file1, file2) }
                 .groupTuple(sort: true)
@@ -210,9 +215,19 @@ workflow ALIGN_READS {
      } else if (aligner == "star-plants") {
 	output_align = run_star_align_plants(samples_align, index, genes)
      } else if (aligner == "hisat") {
-	output_align = run_hisat_align(samples_align, index, genes)
+	output_align = run_hisat_align(samples_align, index, genes, strandedness)
      }
      
+     output_align.counts
+        .map { it -> it[1]}
+        .flatten()
+        .collect()
+        .set { counts }
+
+     if (aligner in ["star", "star-plants", "star-snps"]) {
+	combine_counts_star(counts)
+     } //else if (aligner in ["hisat", "hisat_highmem"])
+
      output_align.reports
         .map { it -> it[1]}
         .flatten()
@@ -222,7 +237,6 @@ workflow ALIGN_READS {
      // QC stages
      run_bam_stats(output_align.alignements, convert_bed.out)
      run_junction_annotation(output_align.alignements, convert_bed.out)
-
      run_multiqc(reports, selectTool(params.aligner))
 }
 

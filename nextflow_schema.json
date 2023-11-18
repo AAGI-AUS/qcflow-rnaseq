@@ -14,7 +14,14 @@
           "type": "string",
           "description": "Preferred pipeline to run",
           "default": "all",
-          "enum": ["all", "genome-index", "read-qc", "trim", "align", "infer-strandedness"]
+          "enum": [
+            "all",
+            "genome-index",
+            "read-qc",
+            "trim",
+            "align",
+            "infer-strandedness"
+          ]
         },
         "aligner": {
           "type": "string",
@@ -60,14 +67,14 @@
           "type": "number",
           "minimum": 50,
           "description": "Minimum read length (-l in fastp)",
-          "default": 50.0
+          "default": 50
         },
         "qual_phred": {
           "type": "number",
           "description": "Phred score used for trimming (-q in fastp)",
           "minimum": 10,
           "maximum": 30,
-          "default": 30.0
+          "default": 30
         }
       }
     },
@@ -163,7 +170,15 @@
     },
     "cdna": {
       "type": "string",
-      "default": null
+      "default": "None",
+      "description": "Fasta file with cDNA sequences",
+      "format": "file-path"
+    },
+    "strandedness": {
+      "type": "string",
+      "description": "RNAseq library strandedness",
+      "default": "RF",
+      "enum": ["RF", "FR", "unstranded"]
     }
   }
 }
