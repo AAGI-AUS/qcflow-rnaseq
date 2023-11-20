@@ -5,12 +5,13 @@
 
 import argparse
 import pandas as pd
+import os
 
 class FileColumnSelectorStar:
     def __init__(self):
         self.data_frames = {}
     
-    def combine_counts_star(self, files, strandedness):
+    def combine_counts_star(self, files, strandedness, out_file):
         """
         Combine star ReadCounts output from multiple files
         """
@@ -33,11 +34,12 @@ class FileColumnSelectorStar:
             
             # Add columns from other files using file names as column names
             for file, column_data in self.data_frames.items():
-                final_df[file.replace("_ReadsPerGene.out.tab", "")] = column_data
+		file_base = os.path.basename(file)
+                final_df[file_base.replace("_ReadsPerGene.out.tab", "")] = column_data
             
             # Output file
             final_df.columns.values[0] = "Genes"
-            print(final_df.to_string(index=False))
+            final_df.to_csv(out_file, index=False, sep='\t')
 
         except Exception as e:
             print(f"Error processing files: {e}")
@@ -60,10 +62,11 @@ def main():
     parser = argparse.ArgumentParser(description="Select specified columns from input files")
     parser.add_argument("--input", nargs='+', help="List of input files", required=True)
     parser.add_argument("--strandedness", choices=['RF', 'FR', 'unstranded'], default="RF", help="Library preparation stradedness (default: RF)")
+    parser.add_argument("--output", help="Name of the output file", required=True)
     args = parser.parse_args()
 
     selector = FileColumnSelectorStar()
-    selector.combine_counts_star(args.input, args.strandedness)
+    selector.combine_counts_star(args.input, args.strandedness, args.output)
 
 if __name__ == "__main__":
     main()

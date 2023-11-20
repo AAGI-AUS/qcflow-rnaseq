@@ -99,9 +99,9 @@ def is_null(var) {
 
 def selectTool(inputParameter) {
    selectedTool = ""
-   if (inputParameter in ["star", "star-plants", "star-snps"]) {
+   if (inputParameter  ==~ /.*star.*/ ) {
         selectedTool = "star"
-   } else if (inputParameter in ["hisat", "hisat-snps", "hisat_highmem"]) {
+   } else if (inputParameter ==~ /.*hisat.*/) {
         selectedTool = "hisat"
    } else {
         selectedTool = "reads"
@@ -134,10 +134,11 @@ switch (workflow_input) {
      case ["align"]:
 	include { run_star_align_plants; run_star_align; run_hisat_align; run_multiqc } from './modules/module_read_align.nf'
 	include { convert_bed; run_bam_stats; run_junction_annotation } from './modules/module_align_qc.nf'
-	include { combine_counts_star } from './modules/module_aligncounts.nf'
+	include { combine_counts_star; combine_counts_featurecounts; run_feature_counts } from './modules/module_align_counts.nf'
 	strandedness = params.strandedness
 	fastq_dir = params.fastq_dir
         library_name = params.library_name
+	genome = file(params.genome)
 	genes = file(params.genes)
 	index = file(params.index_dir)
 	aligner = params.aligner
@@ -206,28 +207,43 @@ workflow ALIGN_READS {
      take:
      samples_align
      aligner
+     genome
      genes
 
      main:
 
      if (aligner == "star") {
-	output_align = run_star_align(samples_align, index, genes)
+	output_align = run_star_align(samples_align, index, genome, genes)
      } else if (aligner == "star-plants") {
-	output_align = run_star_align_plants(samples_align, index, genes)
-     } else if (aligner == "hisat") {
-	output_align = run_hisat_align(samples_align, index, genes, strandedness)
-     }
-     
-     output_align.counts
+	output_align = run_star_align_plants(samples_align, index, genome, genes)
+     } else if (aligner ==~ /.*hisat.*/)  {
+	output_align = run_hisat_align(samples_align, index, genes)
+     } 
+
+     if (aligner ==~ /.*star.*/) {
+
+	output_align.counts
         .map { it -> it[1]}
         .flatten()
         .collect()
         .set { counts }
 
-     if (aligner in ["star", "star-plants", "star-snps"]) {
 	combine_counts_star(counts)
-     } //else if (aligner in ["hisat", "hisat_highmem"])
 
+     } else if (aligner ==~ /.*hisat.*/) {
+
+	output_counts = run_feature_counts(output_align.alignements, genome, genes)
+
+	output_counts.counts
+        .map { it -> it[1]}
+        .flatten()
+        .collect()
+        .set { counts }
+
+	combine_counts_featurecounts(counts)
+     }
+
+     // Create reports
      output_align.reports
         .map { it -> it[1]}
         .flatten()
@@ -276,7 +292,7 @@ workflow {
 		TRIM_READS(samples, adapters)
 		break;
 	case 4:
-		ALIGN_READS(samples_align, aligner, genes)
+		ALIGN_READS(samples_align, aligner, genome, genes)
 		break;
 	case 5:
 		INFER_STRANDEDNESS(cdna, genes, samples)

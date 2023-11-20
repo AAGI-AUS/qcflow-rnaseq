@@ -2,11 +2,13 @@
 
 nextflow.enable.dsl=2
 
+genome           = params.genome
 index_dir        = params.index_dir
 output_dir       = params.output_dir
 hisat_prefix     = params.hisat_prefix
 algner           = params.aligner
 
+strandedness     = params.strandedness 
 sjOverhang       = params.sjOverhang
 
 process run_star_align {
@@ -18,10 +20,12 @@ process run_star_align {
         tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: alignements
         tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Log.final.out"), emit: reports
 	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_ReadsPerGene.out.tab"), emit: counts
+	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_SJ.out.tab"), emit: splicejunctions
 
      input:
         tuple val(sample_id), path(reads1), path(reads2)
         val(index_dir)
+	val(genome)
         val(genes)
      
      script:
@@ -57,12 +61,14 @@ process run_star_align_plants {
      input:
         tuple val(sample_id), path(reads1), path(reads2)
 	val(index_dir)
+	val(genome)
 	val(genes)
 
      output:
 	tuple val(sample_id), path("star_aligned_plants/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: alignements
 	tuple val(sample_id), path("star_aligned_plants/${sample_id}/${sample_id}_Log.final.out"), emit: reports
 	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_ReadsPerGene.out.tab"), emit: counts
+	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_SJ.out.tab"), emit: splicejunctions
 
      script:
         """
@@ -94,6 +100,7 @@ process run_star_align_plants {
         """
 }
 
+
 process run_hisat_align {
 
      label 'hisat'
@@ -104,27 +111,30 @@ process run_hisat_align {
      tuple val(sample_id), path(reads1), path(reads2)
      val(index_dir)
      val(genes)
-     
+
      output:
      tuple val(sample_id), path("hisat_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: alignements
-     tuple val(sample_id), path("hisat_aligned/${sample_id}/${sample_id}.hisat.summary.log"), emit: reports
-     
-     script:
-	"""
-	mkdir -p hisat_aligned/${sample_id}
-	hisat2_extract_splice_sites.py $genes > splicesites.tsv
-	
-	hisat2 \
-	-x $index_dir/${hisat_prefix} \
-	-1 ${reads1.join(",")} \
-	-2 ${reads2.join(",")} \
-	--known-splicesite-infile splicesites.tsv \
-	--summary-file hisat_aligned/${sample_id}/${sample_id}.hisat.summary.log \
-	--rna-strandness FR --dta --threads ${task.cpus} \
-	| samtools view -bS -F 4 -F 256 - | samtools sort - -o hisat_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam
-	"""
-}
+     tuple val(sample_id), path("hisat_aligned/${sample_id}/${sample_id}_hisat.summary.log"), emit: reports
+     tuple val(sample_id), path("hisat_aligned/${sample_id}/${sample_id}_splicejunctions.txt"), emit: splicejunctions
 
+     script:
+        """
+        mkdir -p hisat_aligned/${sample_id}
+        hisat2_extract_splice_sites.py $genes > splicesites.tsv
+
+        hisat2 \
+        -x $index_dir/${hisat_prefix} \
+        -1 ${reads1.join(",")} \
+        -2 ${reads2.join(",")} \
+        --known-splicesite-infile splicesites.tsv \
+        --summary-file hisat_aligned/${sample_id}/${sample_id}_hisat.summary.log \
+        --rna-strandness ${strandedness} \
+        --dta \
+        --threads ${task.cpus} \
+        --novel-splicesite-outfile hisat_aligned/${sample_id}/${sample_id}_splicejunctions.txt \
+        | samtools view -bS -F 4 -F 256 - | samtools sort - -o hisat_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam
+        """
+}
 
 process run_multiqc {
     tag { 'multiqc run' }
