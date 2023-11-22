@@ -58,7 +58,7 @@ process run_fastqc {
     """
 }
 
-process run_multiqc {
+process run_multiqc_trimming {
 
     tag { 'multiqc run' }
     publishDir params.output_dir, mode: 'copy'

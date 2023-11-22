@@ -13,9 +13,8 @@
         "workflow": {
           "type": "string",
           "description": "Preferred pipeline to run",
-          "default": "all",
+          "default": "align",
           "enum": [
-            "all",
             "genome-index",
             "read-qc",
             "trim",

@@ -2,7 +2,6 @@
 
 nextflow.enable.dsl=2
 
-genome           = params.genome
 index_dir        = params.index_dir
 output_dir       = params.output_dir
 hisat_prefix     = params.hisat_prefix
@@ -24,8 +23,6 @@ process run_star_align {
 
      input:
         tuple val(sample_id), path(reads1), path(reads2)
-        val(index_dir)
-	val(genome)
         val(genes)
      
      script:
@@ -60,15 +57,13 @@ process run_star_align_plants {
 
      input:
         tuple val(sample_id), path(reads1), path(reads2)
-	val(index_dir)
-	val(genome)
 	val(genes)
 
      output:
 	tuple val(sample_id), path("star_aligned_plants/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: alignements
 	tuple val(sample_id), path("star_aligned_plants/${sample_id}/${sample_id}_Log.final.out"), emit: reports
-	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_ReadsPerGene.out.tab"), emit: counts
-	tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_SJ.out.tab"), emit: splicejunctions
+	tuple val(sample_id), path("star_aligned_plants/${sample_id}/${sample_id}_ReadsPerGene.out.tab"), emit: counts
+	tuple val(sample_id), path("star_aligned_plants/${sample_id}/${sample_id}_SJ.out.tab"), emit: splicejunctions
 
      script:
         """
@@ -109,7 +104,6 @@ process run_hisat_align {
 
      input:
      tuple val(sample_id), path(reads1), path(reads2)
-     val(index_dir)
      val(genes)
 
      output:
@@ -136,7 +130,7 @@ process run_hisat_align {
         """
 }
 
-process run_multiqc {
+process run_multiqc_align {
     tag { 'multiqc run' }
     publishDir "${output_dir}", mode: 'copy', overwrite: true
 

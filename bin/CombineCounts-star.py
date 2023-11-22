@@ -34,7 +34,7 @@ class FileColumnSelectorStar:
             
             # Add columns from other files using file names as column names
             for file, column_data in self.data_frames.items():
-		file_base = os.path.basename(file)
+                file_base = os.path.basename(file)
                 final_df[file_base.replace("_ReadsPerGene.out.tab", "")] = column_data
             
             # Output file

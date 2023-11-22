@@ -7,7 +7,7 @@ nextflow.enable.dsl=2
  *  ======================================================================================================
  */
 line="=".multiply(100)
-ver="qcflow-rnaseq v0.0.5"
+ver="qcflow-rnaseq v1.0.0"
 
 // General params
 params.help                  = null
@@ -24,7 +24,7 @@ config_profile_description   = null
 config_profile_contact       = null
 config_profile_url           = null
 
-params.workflow              = "all"
+params.workflow              = "align"
 params.aligner	             = "star"
 
 // STAR index
@@ -109,6 +109,7 @@ def selectTool(inputParameter) {
    return selectedTool
 }
 
+
 workflow_input = params.workflow
 switch (workflow_input) {
     case ["genome-index"]:
@@ -120,7 +121,7 @@ switch (workflow_input) {
 	snp = params.snps
         break;
     case ["trim"]:
-	include { run_fastp; run_fastqc; run_multiqc } from './modules/module_read_trimming.nf'
+	include { run_fastp; run_fastqc; run_multiqc_trimming } from './modules/module_read_trimming.nf'
 	adapters = file(params.adapters)
 	samples = Channel.fromFilePairs("${fastq_dir}", type: 'file')
                     .ifEmpty { exit 1, fastq_dir }
@@ -132,7 +133,7 @@ switch (workflow_input) {
                     .ifEmpty { exit 1, fastq_dir }
         break;
      case ["align"]:
-	include { run_star_align_plants; run_star_align; run_hisat_align; run_multiqc } from './modules/module_read_align.nf'
+	include { run_star_align_plants; run_star_align; run_hisat_align; run_multiqc_align } from './modules/module_read_align.nf'
 	include { convert_bed; run_bam_stats; run_junction_annotation } from './modules/module_align_qc.nf'
 	include { combine_counts_star; combine_counts_featurecounts; run_feature_counts } from './modules/module_align_counts.nf'
 	strandedness = params.strandedness
@@ -167,7 +168,7 @@ workflow GENOME_INDEX {
 	run_hisat_index() 
      } else if (aligner == "hisat-snps") {
 	run_hisat_index_snps()
-     } else if (aligner == "star")  {
+     } else if (aligner == "star" || aligner == "star-plants") {
 	run_star_index()
      } else if (aligner == "star-snps") {
 	run_star_index_snps()
@@ -200,26 +201,26 @@ workflow TRIM_READS {
         .set { fastp_json }
 
     fastqc_trimmed_out = run_fastqc(fastp_out.trimmed_reads)
-    run_multiqc(fastp_json.mix(fastqc_trimmed_out).collect())
+    run_multiqc_trimming(fastp_json.mix(fastqc_trimmed_out).collect())
 }
 
 workflow ALIGN_READS {
+
      take:
      samples_align
      aligner
-     genome
+     index
      genes
 
      main:
-
      if (aligner == "star") {
-	output_align = run_star_align(samples_align, index, genome, genes)
+	output_align = run_star_align(samples_align, genes)
      } else if (aligner == "star-plants") {
-	output_align = run_star_align_plants(samples_align, index, genome, genes)
+	output_align = run_star_align_plants(samples_align, genes)
      } else if (aligner ==~ /.*hisat.*/)  {
-	output_align = run_hisat_align(samples_align, index, genes)
-     } 
-
+	output_align = run_hisat_align(samples_align, genes)
+     }     
+     
      if (aligner ==~ /.*star.*/) {
 
 	output_align.counts
@@ -245,15 +246,16 @@ workflow ALIGN_READS {
 
      // Create reports
      output_align.reports
-        .map { it -> it[1]}
-        .flatten()
-        .collect()
-        .set { reports }
+       .map { it -> it[1]}
+       .flatten()
+       .collect()
+       .set { reports }
+     
      convert_bed(genes)
      // QC stages
      run_bam_stats(output_align.alignements, convert_bed.out)
      run_junction_annotation(output_align.alignements, convert_bed.out)
-     run_multiqc(reports, selectTool(params.aligner))
+     run_multiqc_align(reports, selectTool(aligner))
 }
 
 workflow INFER_STRANDEDNESS {
