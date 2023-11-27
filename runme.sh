@@ -6,16 +6,16 @@ if [ "$1" == "-h" ]; then
 fi
 
 # alignment example
-nextflow run -resume -profile singularity,pawsey_nimbus,c16r64 ./main.nf \
+nextflow run -resume -profile singularity,pawsey_nimbus,c16r64 -r main ccdmb/qcflow-rnaseq \
   --workflow align \
   --aligner hisat \
   --sjOverhang 149 \
-  --genome "/home/ubuntu/Documents/genome/Morex_pseudomolecules_v2.fasta" \
-  --genes "/home/ubuntu/Documents/genome/Morex.gtf" \
+  --genome "$PWD/genome/Morex_pseudomolecules_v2.fasta" \
+  --genes "$PWD/genome/Morex.gtf" \
   --output_dir results \
   --library_name 1,6 \
-  --index_dir "/home/ubuntu/Documents/barley/rnaseq/alignments/hisat_indices/Morex/" \
+  --index_dir "$PWD/hisat_indices/Morex/" \
   --hisat_prefix "hisat_index" \
-  --fastq_dir "/home/ubuntu/Documents/barley/rnaseq/raw_reads/test_runs/*_{R1,R2}.fastq.gz" \
-  --cdna /home/ubuntu/Documents/genome/Morex.cds.fasta \
+  --fastq_dir "$PWD/rawreads/*_{R1,R2}.fastq.gz" \
+  --cdna "$PWD/Morex.cds.fasta" \
   --strandedness RF

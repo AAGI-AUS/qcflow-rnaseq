@@ -9,12 +9,12 @@
 #SBATCH --mail-type=ALL
 #SBATCH --export=NONE
 
-module load nextflow/23.04.3
+module load nextflow/22.10.0
 module load singularity/3.11.4-slurm
 
 nextflow run -resume -profile singularity,pawsey_setonix -r main ccdmb/qcflow-rnaseq \
   --workflow genome-index \
   --aligner hisat-highmem \
-  --genome "$PWD/genomes/Akashinriki_pseudomolecule_v1.fasta" \
-  --genes "$PWD/genomes/Akashinriki.gtf" \
-  --output_dir results 
+  --genome "$PWD/genome/Morex_pseudomolecules_v2.fasta" \
+  --genes "$PWD/annotation/Morex.gtf" \
+  --output_dir results

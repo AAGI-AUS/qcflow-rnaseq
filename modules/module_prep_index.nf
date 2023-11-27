@@ -6,6 +6,7 @@ genome           = params.genome
 genes            = params.genes
 index_dir        = file(genome, type: 'file', checkIfExists: true).getParent()
 output_dir       = params.output_dir
+input_snps       = params.snps
 
 //STAR
 sjOverhang       = params.sjOverhang
@@ -18,6 +19,10 @@ process run_star_index {
     tag { "star: index" }
     memory = max_memory
     publishDir "${index_dir}/${output_dir}", mode: 'copy', overwrite: true
+
+    input:
+    path(genome)
+    path(genes)
     
     output:
     tuple val("starIndex"), path("*"), emit: star_index
@@ -40,6 +45,11 @@ process run_star_index_snps {
 
     tag { "star_snps: index" }
     publishDir "${index_dir}/${output_dir}", mode: 'copy', overwrite: true
+
+    input:
+    path(genome)
+    path(genes)
+    path(snps)
 
     output:
     tuple val("starIndex"), path("*"), emit: star_index
@@ -65,6 +75,10 @@ process run_hisat_index {
 
     output:
     path("hisat_index"), emit: hisat_index
+
+    input:
+    path(genome)
+    path(genes)
     
     script:
     """
@@ -72,7 +86,7 @@ process run_hisat_index {
     
     hisat2_extract_exons.py ${genes} > exons.tsv
     hisat2_extract_splice_sites.py ${genes} > splicesites.tsv
-    hisat2-build -p 32 --ss splicesites.tsv --exon exons.tsv ${genome} hisat_index/hisat_index
+    hisat2-build -p ${task.cpus} --ss splicesites.tsv --exon exons.tsv ${genome} hisat_index/hisat_index
     """
 }
 
@@ -83,6 +97,10 @@ process run_hisat_index_high_mem {
 
     output:
     path("hisat_index"), emit: hisat_index
+
+    input:
+    path(genome)
+    path(genes)
 
     script:
     """

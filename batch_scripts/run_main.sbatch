@@ -13,15 +13,15 @@
 module load nextflow/22.10.0
 module load singularity/3.11.4-slurm
 
-nextflow run -resume -profile singularity,pawsey_setonix ./main.nf \
+nextflow run -resume -profile singularity,pawsey_setonix -r main ccdmb/qcflow-rnaseq \
   --workflow align \
   --aligner star \
   --sjOverhang 149 \
-  --genome "/scratch/y95/kgagalova/barley/barley_rnaseq/barley_reference/Morex/genome/Morex_pseudomolecules_v2.fasta" \
-  --genes "/scratch/y95/kgagalova/barley/barley_rnaseq/barley_reference/Morex/annotation/Morex.gtf" \
+  --genome "$PWD/genome/Morex_pseudomolecules_v2.fasta" \
+  --genes "$PWD/Morex/annotation/Morex.gtf" \
   --output_dir results \
   --library_name 1,6 \
-  --index_dir "/scratch/y95/kgagalova/barley/barley_rnaseq/alignments/indices/star/Mor/star_index/Morex/" \
+  --index_dir "$PWD/indices/star/Mor/star_index/Morex/" \
   --hisat_prefix hisat_index \
-  --fastq_dir "/scratch/y95/kgagalova/barley/barley_rnaseq/alignments/alignments/qcflow-rnaseq/test/*R{1,2}.fastq.gz" \
+  --fastq_dir "$PWD/rawreads/*R{1,2}.fastq.gz" \
   --strandedness RF

@@ -113,7 +113,7 @@ def selectTool(inputParameter) {
 workflow_input = params.workflow
 switch (workflow_input) {
     case ["genome-index"]:
-        include { run_star_index; run_star_index_snps; run_hisat_index; run_hisat_index_high_mem } from './modules/module_prep_index.nf'
+        include { run_star_index; run_star_index_snps; run_hisat_index; run_hisat_index_high_mem; } from './modules/module_prep_index.nf'
         aligner = params.aligner
 	genome = params.genome
         genes = params.genes
@@ -163,15 +163,15 @@ workflow GENOME_INDEX {
     main:
 
     if (aligner == "hisat-highmem") {
-	run_hisat_index_high_mem()
+	run_hisat_index_high_mem(genome, genes)
      } else if (aligner == "hisat") {
-	run_hisat_index() 
-     } else if (aligner == "hisat-snps") {
-	run_hisat_index_snps()
+	run_hisat_index(genome, genes)
      } else if (aligner == "star" || aligner == "star-plants") {
-	run_star_index()
+	run_star_index(genome, genes)
      } else if (aligner == "star-snps") {
-	run_star_index_snps()
+	run_star_index_snps(genome, genes, snp)
+     } else {
+	error "Invalid alignment mode: ${aligner}"
      }
 }
 
