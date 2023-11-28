@@ -17,6 +17,7 @@
           "enum": [
             "genome-index",
             "read-qc",
+            "read-qc-cont",
             "trim",
             "align",
             "infer-strandedness"
@@ -66,14 +67,14 @@
           "type": "number",
           "minimum": 50,
           "description": "Minimum read length (-l in fastp)",
-          "default": 50
+          "default": 50.0
         },
         "qual_phred": {
           "type": "number",
           "description": "Phred score used for trimming (-q in fastp)",
           "minimum": 10,
           "maximum": 30,
-          "default": 30
+          "default": 30.0
         }
       }
     },
@@ -178,6 +179,10 @@
       "description": "RNAseq library strandedness",
       "default": "RF",
       "enum": ["RF", "FR", "unstranded"]
+    },
+    "bbt_filters": {
+      "type": "string",
+      "default": "None"
     }
   }
 }

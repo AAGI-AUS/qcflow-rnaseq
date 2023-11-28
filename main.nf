@@ -48,6 +48,9 @@ params.cdna                  = null
 
 params.strandedness          = "RF"
 
+// Contamination screening parameters
+params.bbt_filters            = null
+
 //--------------------------------------------------------------------------------------------------------
 // Validation
 
@@ -132,6 +135,13 @@ switch (workflow_input) {
         samples = Channel.fromFilePairs("${fastq_dir}", type: 'file')
                     .ifEmpty { exit 1, fastq_dir }
         break;
+     case ["reads-qc-cont"]:
+	include { run_cont } from './modules/module_read_cont.nf'
+	include { run_fastqc; run_multiqc_reads } from './modules/module_read_qc.nf'
+	bbt_filters = params.bbt_filters
+	samples = Channel.fromFilePairs("${fastq_dir}", type: 'file')
+                    .ifEmpty { exit 1, fastq_dir }
+	break;
      case ["align"]:
 	include { run_star_align_plants; run_star_align; run_hisat_align; run_multiqc_align } from './modules/module_read_align.nf'
 	include { convert_bed; run_bam_stats; run_junction_annotation } from './modules/module_align_qc.nf'
@@ -187,6 +197,17 @@ workflow READ_QC {
         .set { fastqc_out }
     run_multiqc_reads(fastqc_out)
 }
+
+/* new function to be filled
+workflow READ_QC_CONT {
+    take:
+    samples
+
+    main:
+    run_cont(samples, bbt_filters)
+    READ_QC(samples)
+}
+*/ 
 
 workflow TRIM_READS {
     take:
@@ -275,12 +296,14 @@ workflow {
 		switchVariable = 1;
 	} else if (workflow_input == "reads-qc") {
 		switchVariable = 2;
-	} else if (workflow_input == "trim") {
+	} else if (workflow_input == "reads-qc-cont") {
 		switchVariable = 3;
-	} else if (workflow_input == "align") {
+	} else if (workflow_input == "trim") {
 		switchVariable = 4;
-	} else if (workflow_input == "infer-strandedness") {
+	} else if (workflow_input == "align") {
 		switchVariable = 5;
+	} else if (workflow_input == "infer-strandedness") {
+		switchVariable = 6;
 	}
  
 	switch (switchVariable) {
@@ -291,12 +314,15 @@ workflow {
 		READ_QC(samples);
 		break;
 	case 3:
+		READ_QC_CONT(samples);
+                break;
+	case 4:
 		TRIM_READS(samples, adapters)
 		break;
-	case 4:
+	case 5:
 		ALIGN_READS(samples_align, aligner, genome, genes)
 		break;
-	case 5:
+	case 6:
 		INFER_STRANDEDNESS(cdna, genes, samples)
 		break;
 	default:
