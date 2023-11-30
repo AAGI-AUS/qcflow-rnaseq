@@ -24,6 +24,8 @@ samples.view()
 
 process create_bf {
    
+   label "bbt"
+   
    tag {"bbt-make: ${sample_id}"}
    publishDir "${outdir}/biobloom-filters/", mode: 'copy', overwrite: true
 

@@ -139,8 +139,8 @@ switch (workflow_input) {
 	include { run_cont } from './modules/module_read_cont.nf'
 	include { run_fastqc; run_multiqc_reads } from './modules/module_read_qc.nf'
 	bbt_filters = params.bbt_filters
-	samples = Channel.fromFilePairs("${fastq_dir}", type: 'file')
-                    .ifEmpty { exit 1, fastq_dir }
+	samples = Channel.fromFilePairs("${fasta_dir}", type: 'file')
+                    .ifEmpty { exit 1, fasta_dir }
 	break;
      case ["align"]:
 	include { run_star_align_plants; run_star_align; run_hisat_align; run_multiqc_align } from './modules/module_read_align.nf'
