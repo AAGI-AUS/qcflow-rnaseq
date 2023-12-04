@@ -10,7 +10,7 @@ The pipeline runs the following:
 * Star or Hisat for alignment
 * RSeQC for alignment quality control
 * how_are_we_stranded_here for library strandedness 
-* Biobloomtools for contamination screening (TBD)
+* Biobloomtools for contamination screening
 
 The pipeline is meant to be executed on the Pawsey-Setonix supercomputer and Nimbus VM. Please get in touch if you want more configurations.       
 
@@ -28,6 +28,7 @@ The main script involves the following workflow options:
 | genome-index | Generate genomic index | star,hisat |
 | read-trimming | Trim input reads and output QC | fastp,fastqc,multiqc |
 | reads-qc | Perform QC on input reads | fastqc,multiqc |
+| reads-qc-cont | Perform QC and contamination screening on reads | fastqc,multiqc,biobloomtools |
 | align | Align RNAseq short reads and output counts | star or hisat,multiqc,rnaseqc,featureCount|
 | infer-strandedness | Infer RNAseq library preparation strandedness | how_are_we_stranded_here | 
 
@@ -36,8 +37,26 @@ The main script involves the following workflow options:
 | star | 2 pass star aligner default | star |
 | star-plants | 2 pass star aligner tuned for plant genomes | star |
 | star-snps | [Star consensus](https://github.com/alexdobin/STAR/blob/master/CHANGES.md#star-277a-----20201228) aligner | star |
-| hisat | Hisat aligner default | fastqc,multiqc |
+| hisat | Hisat aligner default | hisat |
 | hisat-highmem | Hisat high-memory aligner | hisat |
+
+
+## reads-qc-cont
+
+
+```
+nextflow run -resume -r main  -profile local ./main.nf \
+  --workflow reads-qc-cont \
+  --aligner hisat \
+  --sjOverhang 149 \
+  --genome "../Morex_pseudomolecules_v2.fasta" \
+  --genes "../Morex.gtf" \
+  --output_dir results \
+  --library_name 1,6 \
+  --hisat_prefix "hisat_index" \
+  --fastq_dir "$PWD/../reads/*_{R1,R2}.test.fastq.gz" \
+  --bbt_filters "$PWD/results/biobloom-filters/*bf"
+```
 
 
 ## Multi library alignment

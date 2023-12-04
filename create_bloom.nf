@@ -28,7 +28,7 @@ process create_bf {
    label 'bbt'
    
    tag {"bbt-make: ${sample_id}"}
-   publishDir "${outdir}/biobloom-filters/", mode: 'copy', overwrite: true
+   publishDir "${outdir}/bbt-filters/", mode: 'copy', overwrite: true
 
    input:
    tuple val(sample_id), path(fasta_file)

@@ -136,11 +136,13 @@ switch (workflow_input) {
                     .ifEmpty { exit 1, fastq_dir }
         break;
      case ["reads-qc-cont"]:
-	include { run_cont } from './modules/module_read_cont.nf'
+	include { run_cont; combine_cont_bbt } from './modules/module_read_cont.nf'
 	include { run_fastqc; run_multiqc_reads } from './modules/module_read_qc.nf'
 	bbt_filters = params.bbt_filters
-	samples = Channel.fromFilePairs("${fasta_dir}", type: 'file')
-                    .ifEmpty { exit 1, fasta_dir }
+	fastq_dir = params.fastq_dir
+	samples = Channel.fromFilePairs("${fastq_dir}", type: 'file', checkIfExists: true)
+	bbt_filters = Channel.fromPath("${bbt_filters}", type: 'file')
+		.filter { file -> file.name.endsWith('.bf') }
 	break;
      case ["align"]:
 	include { run_star_align_plants; run_star_align; run_hisat_align; run_multiqc_align } from './modules/module_read_align.nf'
@@ -198,16 +200,26 @@ workflow READ_QC {
     run_multiqc_reads(fastqc_out)
 }
 
-/* new function to be filled
 workflow READ_QC_CONT {
     take:
     samples
+    bbt_filters
 
     main:
-    run_cont(samples, bbt_filters)
+    bbt_filters
+	.collect()
+	.set { bbt }
+    output_cont = run_cont(samples, bbt)
+    
+    output_cont.cont_out
+        .map { it -> it[1]}
+        .flatten()
+        .collect()
+        .set { cont_counts }
+    combine_cont_bbt(cont_counts)
+
     READ_QC(samples)
 }
-*/ 
 
 workflow TRIM_READS {
     take:
@@ -314,7 +326,7 @@ workflow {
 		READ_QC(samples);
 		break;
 	case 3:
-		READ_QC_CONT(samples);
+		READ_QC_CONT(samples, bbt_filters);
                 break;
 	case 4:
 		TRIM_READS(samples, adapters)

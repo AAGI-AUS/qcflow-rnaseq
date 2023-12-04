@@ -16,8 +16,8 @@
           "default": "align",
           "enum": [
             "genome-index",
-            "read-qc",
-            "read-qc-cont",
+            "reads-qc",
+            "reads-qc-cont",
             "trim",
             "align",
             "infer-strandedness"
