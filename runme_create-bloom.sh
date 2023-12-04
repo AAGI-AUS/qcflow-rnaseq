@@ -5,6 +5,6 @@ if [ "$1" == "-h" ]; then
   exit 0
 fi
 
-nextflow run -resume -profile singularity create_bloom.nf \
+nextflow run -resume -profile singularity ./create_bloom.nf \
 	--input_fasta "$PWD/bloom-filters/*fasta" \
 	--output_dir results

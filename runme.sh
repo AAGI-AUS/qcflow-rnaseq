@@ -7,7 +7,7 @@ fi
 
 # alignment example
 nextflow run -resume -profile singularity,pawsey_nimbus,c16r64 -r main ccdmb/qcflow-rnaseq \
-  --workflow align \
+  --workflow reads-qc-cont \
   --aligner hisat \
   --sjOverhang 149 \
   --genome "$PWD/genome/Morex_pseudomolecules_v2.fasta" \

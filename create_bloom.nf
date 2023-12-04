@@ -9,6 +9,8 @@ nextflow.enable.dsl=2
 line="=".multiply(100)
 ver="qcflow-rnaseq v1.0.0"
 
+outdir                = "results"
+
 // General params
 help                  = params.help          
 outdir                = params.output_dir 
@@ -19,12 +21,12 @@ fasta_dir             = params.input_fasta
 
 samples = Channel.fromPath("${fasta_dir}")
 	.map { tuple( it.getBaseName(), it ) }
-
 samples.view()
 
 process create_bf {
-   
-   label "bbt"
+
+   label 'max_cpus'
+   executor = 'local'
    
    tag {"bbt-make: ${sample_id}"}
    publishDir "${outdir}/biobloom-filters/", mode: 'copy', overwrite: true
