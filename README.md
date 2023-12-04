@@ -43,19 +43,15 @@ The main script involves the following workflow options:
 
 ## reads-qc-cont
 
-
+Example command run
 ```
-nextflow run -resume -r main  -profile local ./main.nf \
+nextflow run -resume -profile local -r main ccdmb/qcflow-rnaseq \
   --workflow reads-qc-cont \
-  --aligner hisat \
-  --sjOverhang 149 \
-  --genome "../Morex_pseudomolecules_v2.fasta" \
-  --genes "../Morex.gtf" \
+  --genome "$PWD/genome/Morex_pseudomolecules_v2.fasta" \
+  --genes "$PWD/genes/Morex.gtf" \
   --output_dir results \
-  --library_name 1,6 \
-  --hisat_prefix "hisat_index" \
-  --fastq_dir "$PWD/../reads/*_{R1,R2}.test.fastq.gz" \
-  --bbt_filters "$PWD/results/biobloom-filters/*bf"
+  --fastq_dir "$PWD/reads/*_{R1,R2}.test.fastq.gz" \
+  --bbt_filters "$PWD/biobloom-filters/*"
 ```
 
 
