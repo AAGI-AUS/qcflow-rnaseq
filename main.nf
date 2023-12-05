@@ -18,7 +18,7 @@ params.fastq_dir             = "data"
 
 // system specific parameters
 params.max_cpus              = 1
-params.max_memory            = 1
+params.max_memory            = '4.GB'
 
 config_profile_description   = null 
 config_profile_contact       = null
