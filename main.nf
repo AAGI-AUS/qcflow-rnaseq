@@ -18,13 +18,13 @@ params.fastq_dir             = "data"
 
 // system specific parameters
 params.max_cpus              = 1
-params.max_memory            = '4.GB'
+params.max_memory            = 1
 
 config_profile_description   = null 
 config_profile_contact       = null
 config_profile_url           = null
 
-params.workflow              = "align"
+params.workflow              = "all"
 params.aligner	             = "star"
 
 // STAR index
@@ -47,9 +47,6 @@ params.min_read_length       = 50
 params.cdna                  = null
 
 params.strandedness          = "RF"
-
-// Contamination screening parameters
-params.bbt_filters            = null
 
 //--------------------------------------------------------------------------------------------------------
 // Validation
@@ -112,11 +109,10 @@ def selectTool(inputParameter) {
    return selectedTool
 }
 
-
 workflow_input = params.workflow
 switch (workflow_input) {
     case ["genome-index"]:
-        include { run_star_index; run_star_index_snps; run_hisat_index; run_hisat_index_high_mem; } from './modules/module_prep_index.nf'
+        include { run_star_index; run_star_index_snps; run_hisat_index; run_hisat_index_high_mem } from './modules/module_prep_index.nf'
         aligner = params.aligner
 	genome = params.genome
         genes = params.genes
@@ -124,8 +120,9 @@ switch (workflow_input) {
 	snp = params.snps
         break;
     case ["trim"]:
-	include { run_fastp; run_fastqc; run_multiqc_trimming } from './modules/module_read_trimming.nf'
+	include { run_fastp; run_fastqc; run_multiqc } from './modules/module_read_trimming.nf'
 	adapters = file(params.adapters)
+	fastq_dir = params.fastq_dir
 	samples = Channel.fromFilePairs("${fastq_dir}", type: 'file')
                     .ifEmpty { exit 1, fastq_dir }
 	break;
@@ -135,23 +132,13 @@ switch (workflow_input) {
         samples = Channel.fromFilePairs("${fastq_dir}", type: 'file')
                     .ifEmpty { exit 1, fastq_dir }
         break;
-     case ["reads-qc-cont"]:
-	include { run_cont; combine_cont_bbt } from './modules/module_read_cont.nf'
-	include { run_fastqc; run_multiqc_reads } from './modules/module_read_qc.nf'
-	bbt_filters = params.bbt_filters
-	fastq_dir = params.fastq_dir
-	samples = Channel.fromFilePairs("${fastq_dir}", type: 'file', checkIfExists: true)
-	bbt_filters = Channel.fromPath("${bbt_filters}", type: 'file')
-		.filter { file -> file.name.endsWith('.bf') }
-	break;
      case ["align"]:
-	include { run_star_align_plants; run_star_align; run_hisat_align; run_multiqc_align } from './modules/module_read_align.nf'
-	include { convert_bed; run_bam_stats; run_junction_annotation } from './modules/module_align_qc.nf'
+	include { run_star_align_plants; run_star_align; run_hisat_align; run_multiqc } from './modules/module_read_align.nf'
+	include { convert_bed; run_bam_stats; run_junction_annotation; combine_bam_stats } from './modules/module_align_qc.nf'
 	include { combine_counts_star; combine_counts_featurecounts; run_feature_counts } from './modules/module_align_counts.nf'
 	strandedness = params.strandedness
 	fastq_dir = params.fastq_dir
         library_name = params.library_name
-	genome = file(params.genome)
 	genes = file(params.genes)
 	index = file(params.index_dir)
 	aligner = params.aligner
@@ -175,15 +162,15 @@ workflow GENOME_INDEX {
     main:
 
     if (aligner == "hisat-highmem") {
-	run_hisat_index_high_mem(genome, genes)
+	run_hisat_index_high_mem()
      } else if (aligner == "hisat") {
-	run_hisat_index(genome, genes)
-     } else if (aligner == "star" || aligner == "star-plants") {
-	run_star_index(genome, genes)
+	run_hisat_index() 
+     } else if (aligner == "hisat-snps") {
+	run_hisat_index_snps()
+     } else if (aligner == "star")  {
+	run_star_index()
      } else if (aligner == "star-snps") {
-	run_star_index_snps(genome, genes, snp)
-     } else {
-	error "Invalid alignment mode: ${aligner}"
+	run_star_index_snps()
      }
 }
 
@@ -200,27 +187,6 @@ workflow READ_QC {
     run_multiqc_reads(fastqc_out)
 }
 
-workflow READ_QC_CONT {
-    take:
-    samples
-    bbt_filters
-
-    main:
-    bbt_filters
-	.collect()
-	.set { bbt }
-    output_cont = run_cont(samples, bbt)
-    
-    output_cont.cont_out
-        .map { it -> it[1]}
-        .flatten()
-        .collect()
-        .set { cont_counts }
-    combine_cont_bbt(cont_counts)
-
-    READ_QC(samples)
-}
-
 workflow TRIM_READS {
     take:
     samples
@@ -234,26 +200,25 @@ workflow TRIM_READS {
         .set { fastp_json }
 
     fastqc_trimmed_out = run_fastqc(fastp_out.trimmed_reads)
-    run_multiqc_trimming(fastp_json.mix(fastqc_trimmed_out).collect())
+    run_multiqc(fastp_json.mix(fastqc_trimmed_out).collect())
 }
 
 workflow ALIGN_READS {
-
      take:
      samples_align
      aligner
-     index
      genes
 
      main:
+
      if (aligner == "star") {
-	output_align = run_star_align(samples_align, genes)
+	output_align = run_star_align(samples_align, index, genes)
      } else if (aligner == "star-plants") {
-	output_align = run_star_align_plants(samples_align, genes)
+	output_align = run_star_align_plants(samples_align, index, genes)
      } else if (aligner ==~ /.*hisat.*/)  {
-	output_align = run_hisat_align(samples_align, genes)
-     }     
-     
+	output_align = run_hisat_align(samples_align, index, genes)
+     } 
+
      if (aligner ==~ /.*star.*/) {
 
 	output_align.counts
@@ -279,16 +244,25 @@ workflow ALIGN_READS {
 
      // Create reports
      output_align.reports
-       .map { it -> it[1]}
-       .flatten()
-       .collect()
-       .set { reports }
-     
+        .map { it -> it[1]}
+        .flatten()
+        .collect()
+        .set { reports }
      convert_bed(genes)
+
      // QC stages
-     run_bam_stats(output_align.alignements, convert_bed.out)
+     output_bam_stats = run_bam_stats(output_align.alignements, convert_bed.out)
      run_junction_annotation(output_align.alignements, convert_bed.out)
-     run_multiqc_align(reports, selectTool(aligner))
+     run_multiqc(reports, selectTool(params.aligner))
+
+     // Combine results for bam stats in a tabular format
+     output_bam_stats.bam_stats
+        .map { it -> it[1]}
+        .flatten()
+        .collect()
+        .set { bam_stats }
+
+     combine_bam_stats(bam_stats)
 }
 
 workflow INFER_STRANDEDNESS {
@@ -308,14 +282,12 @@ workflow {
 		switchVariable = 1;
 	} else if (workflow_input == "reads-qc") {
 		switchVariable = 2;
-	} else if (workflow_input == "reads-qc-cont") {
-		switchVariable = 3;
 	} else if (workflow_input == "trim") {
-		switchVariable = 4;
+		switchVariable = 3;
 	} else if (workflow_input == "align") {
-		switchVariable = 5;
+		switchVariable = 4;
 	} else if (workflow_input == "infer-strandedness") {
-		switchVariable = 6;
+		switchVariable = 5;
 	}
  
 	switch (switchVariable) {
@@ -326,15 +298,12 @@ workflow {
 		READ_QC(samples);
 		break;
 	case 3:
-		READ_QC_CONT(samples, bbt_filters);
-                break;
-	case 4:
 		TRIM_READS(samples, adapters)
 		break;
-	case 5:
-		ALIGN_READS(samples_align, aligner, genome, genes)
+	case 4:
+		ALIGN_READS(samples_align, aligner, genes)
 		break;
-	case 6:
+	case 5:
 		INFER_STRANDEDNESS(cdna, genes, samples)
 		break;
 	default:

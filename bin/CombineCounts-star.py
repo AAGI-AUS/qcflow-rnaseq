@@ -49,9 +49,9 @@ class FileColumnSelectorStar:
         Assign columns to parse based on the type of library
         """
         column_n = 0
-        if strandedness == 'RF':
+        if strandedness == 'FR':
             column_n = 2
-        elif strandedness == 'FR':
+        elif strandedness == 'RF':
             column_n = 3
         elif strandedness == 'unstranded':
             column_n = 1
@@ -61,7 +61,7 @@ def main():
 
     parser = argparse.ArgumentParser(description="Select specified columns from input files")
     parser.add_argument("--input", nargs='+', help="List of input files", required=True)
-    parser.add_argument("--strandedness", choices=['RF', 'FR', 'unstranded'], default="RF", help="Library preparation stradedness (default: RF)")
+    parser.add_argument("--strandedness", choices=['RF', 'FR', 'unstranded'], default="RF", help="Library preparation stradedness (default: RF). Please check strandedness before running.")
     parser.add_argument("--output", help="Name of the output file", required=True)
     args = parser.parse_args()
 
