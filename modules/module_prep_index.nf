@@ -69,8 +69,8 @@ process run_star_index_snps {
 
 
 process run_hisat_index {
-    label 'hisat2'
-    tag { "hisat2: index" }
+    label 'hisat'
+    tag { "hisat: index" }
     publishDir "${index_dir}/${output_dir}", mode: 'copy', overwrite: true  
 
     output:
@@ -84,15 +84,16 @@ process run_hisat_index {
     """
     mkdir hisat_index
     
-    hisat2_extract_exons.py ${genes} > exons.tsv
-    hisat2_extract_splice_sites.py ${genes} > splicesites.tsv
-    hisat2-build -p ${task.cpus} --ss splicesites.tsv --exon exons.tsv ${genome} hisat_index/hisat_index
+    hisat2_extract_exons.py $genes > exons.tsv
+    hisat2_extract_splice_sites.py $genes > splicesites.tsv
+    hisat2-build -p ${task.cpus} --ss splicesites.tsv --exon exons.tsv $genome hisat_index/hisat_index
     """
 }
 
 process run_hisat_index_high_mem {
     label 'hisat_highmem'
     tag { "hisat: index" }
+
     publishDir "${index_dir}/${output_dir}", mode: 'copy', overwrite: true
 
     output:
@@ -106,11 +107,11 @@ process run_hisat_index_high_mem {
     """
     mkdir hisat_index
 
-    hisat2_extract_exons.py ${genes} > exons.tsv
-    hisat2_extract_splice_sites.py ${genes} > splicesites.tsv
+    hisat2_extract_exons.py $genes > exons.tsv
+    hisat2_extract_splice_sites.py $genes > splicesites.tsv
     
-    hisat2-build -p ${task.cpus} --large-index --noauto --bmaxdivn 8 --dcv 4096 \\
-	--ss splicesites.tsv --exon exons.tsv \\
-	${genome} hisat_index/hisat_index
+    hisat2-build -p ${task.cpus} --large-index --noauto --bmaxdivn 8 --dcv 4096 \
+	--ss splicesites.tsv --exon exons.tsv \
+	$genome hisat_index/hisat_index
     """
 }

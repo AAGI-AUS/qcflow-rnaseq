@@ -27,7 +27,7 @@
           "type": "string",
           "description": "Preferred aligner",
           "default": "star",
-          "enum": ["star", "star-plants", "hisat", "hisat_highmem"]
+          "enum": ["star", "star-plants", "hisat", "hisat-highmem"]
         },
         "output_dir": {
           "type": "string",

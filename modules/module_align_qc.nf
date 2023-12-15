@@ -70,7 +70,7 @@ process run_bam_stats {
     path(genes)
 
     output:
-    tuple val(sample_id), path("bam_stat/${sample_id}_bam-stats.out")
+    tuple val(sample_id), path("bam_stat/${sample_id}_bam-stats.out"), emit: bam_stats
 
     script:
     """
@@ -99,4 +99,22 @@ process run_junction_annotation {
 
     junction_annotation.py -i $bam -o junction_annotation/${sample_id}/${sample_id} -r $genes
     """
+}
+
+process combine_bam_stats {
+
+    tag {"combine bam stats"}
+    publishDir "${outdir}/align_rseqc/", mode: 'copy', overwrite: true
+
+    input:
+    path(bam_stats)
+
+    output:
+    path("StatsBam.tsv"), emit: bamstats
+
+    script:
+    """
+    $PWD/bin/Combine-bam-stats.py --input $bam_stats --output StatsBam.tsv
+    """
+
 }
