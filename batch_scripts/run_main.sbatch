@@ -13,7 +13,7 @@
 module load nextflow/22.10.0
 module load singularity/3.11.4-slurm
 
-nextflow run -resume -profile singularity,pawsey_setonix ./main.nf \ #-r main ccdmb/qcflow-rnaseq \
+nextflow run -resume -profile singularity,pawsey_setonix -r main ccdmb/qcflow-rnaseq \
   --workflow align \
   --aligner hisat \
   --sjOverhang 149 \
