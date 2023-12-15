@@ -21,7 +21,6 @@ fasta_dir             = params.input_fasta
 
 samples = Channel.fromPath("${fasta_dir}")
 	.map { tuple( it.getBaseName(), it ) }
-samples.view()
 
 process create_bf {
 

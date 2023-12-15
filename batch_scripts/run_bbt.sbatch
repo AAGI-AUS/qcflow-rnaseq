@@ -13,6 +13,5 @@ module load nextflow/22.10.0
 module load singularity/3.11.4-slurm
 
 nextflow run -resume -profile singularity,pawsey_setonix ./create_bloom.nf \
-  --workflow reads-qc-cont \
   --output_dir results \
-  --input_fasta '/scratch/y95/kgagalova/barley/contamination/*fasta'
+  --input_fasta "$PWD/fasta/*fasta"
