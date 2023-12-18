@@ -17,7 +17,7 @@ process run_star_index {
 
     label 'star'
     tag { "star: index" }
-    memory = max_memory
+
     publishDir "${index_dir}/${output_dir}", mode: 'copy', overwrite: true
 
     input:
@@ -34,7 +34,7 @@ process run_star_index {
     STAR --runMode genomeGenerate \
          --genomeDir star_index \
 	 --genomeFastaFiles ${genome} \
-         --runThreadN ${cpus} \
+         --runThreadN ${task.cpus} \
          --sjdbGTFfile ${genes} \
          --sjdbOverhang ${sjOverhang}
     """
@@ -49,7 +49,6 @@ process run_star_index_snps {
     input:
     path(genome)
     path(genes)
-    path(snps)
 
     output:
     tuple val("starIndex"), path("*"), emit: star_index
@@ -78,7 +77,7 @@ process run_hisat_index {
 
     input:
     path(genome)
-    path(genes)
+    val(genes)
     
     script:
     """
@@ -101,7 +100,7 @@ process run_hisat_index_high_mem {
 
     input:
     path(genome)
-    path(genes)
+    val(genes)
 
     script:
     """

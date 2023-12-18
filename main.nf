@@ -180,12 +180,10 @@ workflow GENOME_INDEX {
 	run_hisat_index_high_mem(genome, genes)
      } else if (aligner == "hisat") {
 	run_hisat_index() 
-     } else if (aligner == "hisat-snps") {
-	run_hisat_index_snps()
      } else if (aligner == "star")  {
-	run_star_index()
+	run_star_index(genome, genes)
      } else if (aligner == "star-snps") {
-	run_star_index_snps()
+	run_star_index_snps(genome, genes)
      }
 }
 

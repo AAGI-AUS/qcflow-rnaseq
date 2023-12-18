@@ -16,5 +16,5 @@ nextflow run -resume -profile singularity,pawsey_setonix -r main ccdmb/qcflow-rn
   --workflow genome-index \
   --aligner hisat-highmem \
   --genome "$PWD/genome/Morex_pseudomolecules_v2.fasta" \
-  --genes "$PWD/annotation/Morex.gtf" \
+  --genes "$PWD/genome/Morex.gtf" \
   --output_dir results
