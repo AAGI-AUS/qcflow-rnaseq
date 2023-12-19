@@ -179,7 +179,7 @@ workflow GENOME_INDEX {
     if (aligner == "hisat-highmem") {
 	run_hisat_index_high_mem(genome, genes)
      } else if (aligner == "hisat") {
-	run_hisat_index() 
+	run_hisat_index(genome, genes) 
      } else if (aligner == "star")  {
 	run_star_index(genome, genes)
      } else if (aligner == "star-snps") {
@@ -245,7 +245,7 @@ workflow ALIGN_READS {
 
      main:
 
-     if (aligner == "star") {
+     if (aligner == "star" || aligner == "star-snps") {
 	output_align = run_star_align(samples_align, index, genes)
      } else if (aligner == "star-plants") {
 	output_align = run_star_align_plants(samples_align, index, genes)

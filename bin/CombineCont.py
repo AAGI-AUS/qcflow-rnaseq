@@ -29,7 +29,7 @@ class FileColumnSelectorContaminationRate:
                 self.data_frames[file] = df.loc[:, "rate_hit"]
             # Create a DataFrame using the first column from the first file as names
             names = df_first.iloc[:, 0]
-            print(names)
+
             final_df = pd.DataFrame({names.name: names})
 
             # Add columns from other files using file names as column names
