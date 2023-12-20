@@ -50,7 +50,7 @@ Typical local pipeline command:
 
 Input/output options
   --workflow        [string]  Preferred pipeline to run (accepted: genome-index, reads-qc, reads-qc-cont, trim, align, infer-strandedness) [default:align]
-  --aligner         [string]  Preferred aligner (accepted: star, star-plants, hisat, hisat_highmem) [default: star]
+  --aligner         [string]  Preferred aligner (accepted: star, star-snps, star-plants, hisat, hisat_highmem) [default: star]
   --output_dir      [string]  Output directory [default: results]
   --genome          [string]  Reference genome
   --genes           [string]  Reference annotation
