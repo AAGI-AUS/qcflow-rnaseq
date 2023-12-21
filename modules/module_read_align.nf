@@ -39,7 +39,6 @@ process run_star_align {
         --outSAMattributes NH HI AS NM MD \
         --outSAMtype BAM SortedByCoordinate \
         --quantMode GeneCounts \
-        --twopassMode Basic \
         --outTmpDir star_aligned/${sample_id}/_STARtmp \
         --outFileNamePrefix star_aligned/${sample_id}/${sample_id}_ \
         --genomeDir $index_dir \
