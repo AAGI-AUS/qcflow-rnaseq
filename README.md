@@ -76,6 +76,7 @@ Other parameters
 
 ## genome-index
 
+This command can be run with any of the aligner types. ```star``` and ```star-plants``` will generate a standard STAR index, ```star-snps``` generates consensus index. All the hisat aligner options generate the same type of index. Please consider your genome size and chose accordingly between ```hisat``` and ```hisat-highmem```. Large genomes such as human or larger require the adequate memory so please use ```hisat-highmem```.      
 Example run command
 ```
 nextflow run -resume -profile singularity,pawsey_setonix -r main ccdmb/qcflow-rnaseq \
