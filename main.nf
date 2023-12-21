@@ -182,7 +182,7 @@ workflow GENOME_INDEX {
 	run_hisat_index(genome, genes) 
      } else if (aligner == "star")  {
 	run_star_index(genome, genes)
-     } else if (aligner == "star-snps") {
+     } else if (aligner == "star-snps" || aligner == "star-plants") {
 	run_star_index_snps(genome, genes)
      }
 }
