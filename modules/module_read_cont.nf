@@ -16,7 +16,7 @@ process combine_cont_bbt {
 
     script:
     """
-    $PWD/bin/CombineCont.py --input $rates --output ContaminationRate.tsv
+    CombineCont.py --input $rates --output ContaminationRate.tsv
     """
 
 }

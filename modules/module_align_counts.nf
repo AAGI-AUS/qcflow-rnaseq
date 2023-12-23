@@ -19,9 +19,8 @@ process combine_counts_star {
 
     script:
     """
-    ./bin/CombineCounts-star.py --input $counts --strandedness $strandedness --output RawCountsStar.tsv
+    CombineCounts-star.py --input $counts --strandedness $strandedness --output RawCountsStar.tsv
     """
-
 }
 
 process combine_counts_featurecounts {
@@ -37,7 +36,7 @@ process combine_counts_featurecounts {
 
     script:
     """
-    ./bin/CombineCounts-featurecounts.py --input $counts --output RawCountsFeatureCounts.tsv
+    CombineCounts-featurecounts.py --input $counts --output RawCountsFeatureCounts.tsv
     """
 
 }
