@@ -17,7 +17,7 @@ process convert_bed {
 
     script:
     """
-    $PWD/bin/gtf2bed.py $genes | awk -F'\t' 'NF==12 {print}' > ${genes.simpleName}.bed12
+    ./bin/gtf2bed.py $genes | awk -F'\t' 'NF==12 {print}' > ${genes.simpleName}.bed12
     """
 }
 
@@ -114,7 +114,7 @@ process combine_bam_stats {
 
     script:
     """
-    $PWD/bin/Combine-bam-stats.py --input $bam_stats --output StatsBam.tsv
+    ./bin/Combine-bam-stats.py --input $bam_stats --output StatsBam.tsv
     """
 
 }
