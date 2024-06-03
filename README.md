@@ -94,8 +94,6 @@ Example run command
 ```
 nextflow run -resume -profile singularity,pawsey_setonix -r main ccdmb/qcflow-rnaseq \
   --workflow reads-qc \
-  --genome "$PWD/genome/Morex_pseudomolecules_v2.fasta" \
-  --genes "$PWD/genome/Morex.gtf" \
   --output_dir results \
   --fastq_dir "$PWD/test/*R{1,2}.fastq.gz"
 ```
@@ -113,8 +111,6 @@ Example run command
 ```
 nextflow run -resume -profile local -r main ccdmb/qcflow-rnaseq \
   --workflow reads-qc-cont \
-  --genome "$PWD/genome/Morex_pseudomolecules_v2.fasta" \
-  --genes "$PWD/genome/Morex.gtf" \
   --output_dir results \
   --fastq_dir "$PWD/test/*_R{1,2}.fastq.gz" \
   --bbt_filters "$PWD/biobloom-filters/*"
@@ -134,8 +130,6 @@ Example run command
 ```
 nextflow run -resume -profile singularity,pawsey_setonix -r main ccdmb/qcflow-rnaseq \
   --workflow trim \
-  --genome "$PWD/genome/Morex_pseudomolecules_v2.fasta" \
-  --genes "$PWD/genome/Morex.gtf" \
   --output_dir results \
   --fastq_dir "$PWD/test/*R{1,2}.fastq.gz"
 ```
