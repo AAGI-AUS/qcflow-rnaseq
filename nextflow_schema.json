@@ -13,7 +13,6 @@
         "workflow": {
           "type": "string",
           "description": "Preferred pipeline to run",
-          "default": "align",
           "enum": [
             "genome-index",
             "reads-qc",
@@ -26,13 +25,11 @@
         "aligner": {
           "type": "string",
           "description": "Preferred aligner",
-          "default": "star",
           "enum": ["star", "star-plants", "star-snps", "hisat", "hisat-highmem"]
         },
         "output_dir": {
           "type": "string",
-          "description": "Output directory",
-          "default": "results"
+          "description": "Output directory"
         },
         "genome": {
           "type": "string",
@@ -50,7 +47,7 @@
           "description": "Input directory with fastq files"
         }
       },
-      "required": ["genome", "genes", "fastq_dir"]
+      "required": ["fastq_dir"]
     },
     "fastp_parameters": {
       "title": "Fastp parameters",
@@ -60,21 +57,18 @@
       "properties": {
         "adapters": {
           "type": "string",
-          "description": "File containing adaters to trim",
-          "default": "./data/truseq_adapters.fasta"
+          "description": "File containing adaters to trim"
         },
         "min_read_length": {
           "type": "number",
           "minimum": 50,
-          "description": "Minimum read length (-l in fastp)",
-          "default": 50.0
+          "description": "Minimum read length (-l in fastp)"
         },
         "qual_phred": {
           "type": "number",
           "description": "Phred score used for trimming (-q in fastp)",
           "minimum": 10,
-          "maximum": 30,
-          "default": 30.0
+          "maximum": 30
         }
       }
     },
@@ -100,7 +94,6 @@
         "max_cpus": {
           "type": "integer",
           "description": "Maximum number of CPUs that can be requested for any single job.",
-          "default": 4,
           "fa_icon": "fas fa-microchip",
           "hidden": true,
           "help_text": "Use to set an upper-limit for the CPU requirement for each process. Should be an integer e.g. `--max_cpus 1`"
@@ -108,7 +101,6 @@
         "max_memory": {
           "type": "string",
           "description": "Maximum amount of memory that can be requested for any single job.",
-          "default": "2.GB",
           "fa_icon": "fas fa-memory",
           "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
           "hidden": true,
@@ -165,19 +157,16 @@
     },
     "hisat_prefix": {
       "type": "string",
-      "default": "hisat_index",
       "description": "Prefix of hisat index"
     },
     "cdna": {
       "type": "string",
-      "default": "None",
       "description": "Fasta file with cDNA sequences",
       "format": "file-path"
     },
     "strandedness": {
       "type": "string",
       "description": "RNAseq library strandedness",
-      "default": "RF",
       "enum": ["RF", "FR", "unstranded"]
     },
     "bbt_filters": {
