@@ -1,177 +1,190 @@
 {
-  "$schema": "http://json-schema.org/draft-07/schema",
-  "$id": "https://raw.githubusercontent.com/qcflow-rnaseq/master/nextflow_schema.json",
-  "title": "qcflow-rnaseq pipeline parameters",
-  "description": "QC and alignemnt of short reads to reference genome.",
-  "type": "object",
-  "definitions": {
-    "input_output_options": {
-      "title": "Input/output options",
-      "type": "object",
-      "fa_icon": "fas fa-dna",
-      "properties": {
-        "workflow": {
-          "type": "string",
-          "description": "Preferred pipeline to run",
-          "enum": [
-            "genome-index",
-            "reads-qc",
-            "reads-qc-cont",
-            "trim",
-            "align",
-            "infer-strandedness"
-          ]
+    "$schema": "http://json-schema.org/draft-07/schema",
+    "$id": "https://raw.githubusercontent.com/qcflow-rnaseq/master/nextflow_schema.json",
+    "title": "qcflow-rnaseq pipeline parameters",
+    "description": "QC and alignemnt of short reads to reference genome.",
+    "type": "object",
+    "definitions": {
+        "input_output_options": {
+            "title": "Input/output options",
+            "type": "object",
+            "fa_icon": "fas fa-dna",
+            "properties": {
+                "workflow": {
+                    "type": "string",
+                    "description": "Preferred pipeline to run",
+                    "enum": [
+                        "genome-index",
+                        "reads-qc",
+                        "reads-qc-cont",
+                        "trim",
+                        "align",
+                        "infer-strandedness"
+                    ]
+                },
+                "aligner": {
+                    "type": "string",
+                    "description": "Preferred aligner",
+                    "enum": [
+                        "star",
+                        "star-plants",
+                        "star-snps",
+                        "hisat",
+                        "hisat-highmem"
+                    ]
+                },
+                "output_dir": {
+                    "type": "string",
+                    "description": "Output directory"
+                },
+                "genome": {
+                    "type": "string",
+                    "description": "Reference genome",
+                    "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$$",
+                    "format": "file-path"
+                },
+                "genome_size": {
+                    "type": "integer",
+                    "description": "Genome size of the reference genome (bp)"
+                },
+                "genes": {
+                    "type": "string",
+                    "description": "Reference annotation",
+                    "format": "file-path"
+                },
+                "fastq_dir": {
+                    "type": "string",
+                    "description": "Input directory with fastq files"
+                }
+            },
+            "required": [
+                "fastq_dir",
+                "genome_size"
+            ]
         },
-        "aligner": {
-          "type": "string",
-          "description": "Preferred aligner",
-          "enum": ["star", "star-plants", "star-snps", "hisat", "hisat-highmem"]
+        "fastp_parameters": {
+            "title": "Fastp parameters",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "adapters": {
+                    "type": "string",
+                    "description": "File containing adaters to trim"
+                },
+                "min_read_length": {
+                    "type": "number",
+                    "minimum": 50,
+                    "description": "Minimum read length (-l in fastp)"
+                },
+                "qual_phred": {
+                    "type": "number",
+                    "description": "Phred score used for trimming (-q in fastp)",
+                    "minimum": 10,
+                    "maximum": 30
+                }
+            }
         },
-        "output_dir": {
-          "type": "string",
-          "description": "Output directory"
+        "star_index": {
+            "title": "STAR index",
+            "type": "object",
+            "description": "",
+            "default": "",
+            "properties": {
+                "sjOverhang": {
+                    "type": "integer",
+                    "description": "sjDbOverhang value to use"
+                }
+            }
         },
-        "genome": {
-          "type": "string",
-          "description": "Reference genome",
-          "pattern": "^\\S+\\.fn?a(sta)?(\\.gz)?$$",
-          "format": "file-path"
+        "max_job_request_options": {
+            "title": "Max job request options",
+            "type": "object",
+            "fa_icon": "fab fa-acquisitions-incorporated",
+            "description": "Set the top limit for requested resources for any single job.",
+            "help_text": "If you are running on a smaller system, a pipeline step requesting more resources than are available may cause the Nextflow to stop the run with an error. These options allow you to cap the maximum resources requested by any single job so that the pipeline will run on your system.\n\nNote that you can not _increase_ the resources requested by any job using these options. For that you will need your own configuration file. See [the nf-core website](https://nf-co.re/usage/configuration) for details.",
+            "properties": {
+                "max_cpus": {
+                    "type": "integer",
+                    "description": "Maximum number of CPUs that can be requested for any single job.",
+                    "fa_icon": "fas fa-microchip",
+                    "hidden": true,
+                    "help_text": "Use to set an upper-limit for the CPU requirement for each process. Should be an integer e.g. `--max_cpus 1`"
+                },
+                "max_memory": {
+                    "type": "string",
+                    "description": "Maximum amount of memory that can be requested for any single job.",
+                    "fa_icon": "fas fa-memory",
+                    "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
+                    "hidden": true,
+                    "help_text": "Use to set an upper-limit for the memory requirement for each process. Should be a string in the format integer-unit e.g. `--max_memory '8.GB'`"
+                }
+            }
         },
-        "genes": {
-          "type": "string",
-          "description": "Reference annotation",
-          "format": "file-path"
-        },
-        "fastq_dir": {
-          "type": "string",
-          "description": "Input directory with fastq files"
+        "generic_options": {
+            "title": "Generic options",
+            "type": "object",
+            "fa_icon": "fas fa-file-import",
+            "description": "Less common options for the pipeline, typically set in a config file.",
+            "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
+            "properties": {
+                "help": {
+                    "type": "boolean",
+                    "description": "Display help text.",
+                    "fa_icon": "fas fa-question-circle",
+                    "hidden": true
+                }
+            }
         }
-      },
-      "required": ["fastq_dir"]
     },
-    "fastp_parameters": {
-      "title": "Fastp parameters",
-      "type": "object",
-      "description": "",
-      "default": "",
-      "properties": {
-        "adapters": {
-          "type": "string",
-          "description": "File containing adaters to trim"
+    "allOf": [
+        {
+            "$ref": "#/definitions/input_output_options"
         },
-        "min_read_length": {
-          "type": "number",
-          "minimum": 50,
-          "description": "Minimum read length (-l in fastp)"
+        {
+            "$ref": "#/definitions/fastp_parameters"
         },
-        "qual_phred": {
-          "type": "number",
-          "description": "Phred score used for trimming (-q in fastp)",
-          "minimum": 10,
-          "maximum": 30
-        }
-      }
-    },
-    "star_index": {
-      "title": "STAR index",
-      "type": "object",
-      "description": "",
-      "default": "",
-      "properties": {
-        "sjOverhang": {
-          "type": "integer",
-          "description": "sjDbOverhang value to use"
-        }
-      }
-    },
-    "max_job_request_options": {
-      "title": "Max job request options",
-      "type": "object",
-      "fa_icon": "fab fa-acquisitions-incorporated",
-      "description": "Set the top limit for requested resources for any single job.",
-      "help_text": "If you are running on a smaller system, a pipeline step requesting more resources than are available may cause the Nextflow to stop the run with an error. These options allow you to cap the maximum resources requested by any single job so that the pipeline will run on your system.\n\nNote that you can not _increase_ the resources requested by any job using these options. For that you will need your own configuration file. See [the nf-core website](https://nf-co.re/usage/configuration) for details.",
-      "properties": {
-        "max_cpus": {
-          "type": "integer",
-          "description": "Maximum number of CPUs that can be requested for any single job.",
-          "fa_icon": "fas fa-microchip",
-          "hidden": true,
-          "help_text": "Use to set an upper-limit for the CPU requirement for each process. Should be an integer e.g. `--max_cpus 1`"
+        {
+            "$ref": "#/definitions/star_index"
         },
-        "max_memory": {
-          "type": "string",
-          "description": "Maximum amount of memory that can be requested for any single job.",
-          "fa_icon": "fas fa-memory",
-          "pattern": "^\\d+(\\.\\d+)?\\.?\\s*(K|M|G|T)?B$",
-          "hidden": true,
-          "help_text": "Use to set an upper-limit for the memory requirement for each process. Should be a string in the format integer-unit e.g. `--max_memory '8.GB'`"
+        {
+            "$ref": "#/definitions/max_job_request_options"
+        },
+        {
+            "$ref": "#/definitions/generic_options"
         }
-      }
-    },
-    "generic_options": {
-      "title": "Generic options",
-      "type": "object",
-      "fa_icon": "fas fa-file-import",
-      "description": "Less common options for the pipeline, typically set in a config file.",
-      "help_text": "These options are common to all nf-core pipelines and allow you to customise some of the core preferences for how the pipeline runs.\n\nTypically these options would be set in a Nextflow config file loaded for all pipeline runs, such as `~/.nextflow/config`.",
-      "properties": {
-        "help": {
-          "type": "boolean",
-          "description": "Display help text.",
-          "fa_icon": "fas fa-question-circle",
-          "hidden": true
+    ],
+    "properties": {
+        "snps": {
+            "type": "string",
+            "description": "Vcf file (uncompressed) with snps to include to indexing. Must be the same regerence as genome"
+        },
+        "library_name": {
+            "type": "string",
+            "description": "String intervals to extract library name (ex. LIB1_name - 1,4 extracts LIB1)"
+        },
+        "index_dir": {
+            "type": "string",
+            "description": "Path to index (star or hisat)",
+            "format": "directory-path"
+        },
+        "hisat_prefix": {
+            "type": "string",
+            "description": "Prefix of hisat index"
+        },
+        "cdna": {
+            "type": "string",
+            "description": "Fasta file with cDNA sequences",
+            "format": "file-path"
+        },
+        "strandedness": {
+            "type": "string",
+            "description": "RNAseq library strandedness",
+            "enum": [
+                "RF",
+                "FR",
+                "unstranded"
+            ]
         }
-      }
     }
-  },
-  "allOf": [
-    {
-      "$ref": "#/definitions/input_output_options"
-    },
-    {
-      "$ref": "#/definitions/fastp_parameters"
-    },
-    {
-      "$ref": "#/definitions/star_index"
-    },
-    {
-      "$ref": "#/definitions/max_job_request_options"
-    },
-    {
-      "$ref": "#/definitions/generic_options"
-    }
-  ],
-  "properties": {
-    "snps": {
-      "type": "string",
-      "description": "Vcf file (uncompressed) with snps to include to indexing. Must be the same regerence as genome"
-    },
-    "library_name": {
-      "type": "string",
-      "description": "String intervals to extract library name (ex. LIB1_name - 1,4 extracts LIB1)"
-    },
-    "index_dir": {
-      "type": "string",
-      "description": "Path to index (star or hisat)",
-      "format": "directory-path"
-    },
-    "hisat_prefix": {
-      "type": "string",
-      "description": "Prefix of hisat index"
-    },
-    "cdna": {
-      "type": "string",
-      "description": "Fasta file with cDNA sequences",
-      "format": "file-path"
-    },
-    "strandedness": {
-      "type": "string",
-      "description": "RNAseq library strandedness",
-      "enum": ["RF", "FR", "unstranded"]
-    },
-    "bbt_filters": {
-      "type": "string",
-      "default": "None"
-    }
-  }
 }

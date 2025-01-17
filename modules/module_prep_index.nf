@@ -23,7 +23,8 @@ process run_star_index {
     input:
     path(genome)
     path(genes)
-    
+    val(gen_value)
+	    
     output:
     tuple val("starIndex"), path("*"), emit: star_index
     
@@ -36,7 +37,8 @@ process run_star_index {
 	 --genomeFastaFiles ${genome} \
          --runThreadN ${task.cpus} \
          --sjdbGTFfile ${genes} \
-         --sjdbOverhang ${sjOverhang}
+         --sjdbOverhang ${sjOverhang} \
+	 --genomeSAindexNbases ${gen_value}
     """
 }
 
@@ -49,6 +51,7 @@ process run_star_index_snps {
     input:
     path(genome)
     path(genes)
+    val(gen_value)
 
     output:
     tuple val("starIndex"), path("*"), emit: star_index
@@ -62,7 +65,8 @@ process run_star_index_snps {
          --genomeTransformType Haploid \
          --runThreadN ${task.cpus} \
          --sjdbGTFfile ${genes} \
-         --sjdbOverhang ${sjOverhang}
+         --sjdbOverhang ${sjOverhang} \
+	 --genomeSAindexNbases ${gen_value}
     """
 }
 
