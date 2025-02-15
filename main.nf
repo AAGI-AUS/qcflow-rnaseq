@@ -15,6 +15,7 @@ params.output_dir            = "results"
 params.genome                = null
 params.genes                 = null
 params.fastq_dir             = "data"
+params.genome_size           = null
 
 // system specific parameters
 params.max_cpus              = 1
@@ -119,9 +120,13 @@ workflow_input = params.workflow
 
 switch (workflow_input) {
     case ["genome-index"]:
-        include { run_star_index; run_star_index_snps; run_hisat_index; run_hisat_index_high_mem } from './modules/module_prep_index.nf'
+        include { run_star_index; run_star_index_snps; run_hisat_index; run_hisat_index_high_mem; run_star_index_highmem } from './modules/module_prep_index.nf'
         aligner = params.aligner
 	genome = file(params.genome)
+        genome_size = params.genome_size
+        // genome size for index
+        if (params.genome_size == null) { throw new IllegalArgumentException("Error: genome_size parameter (in bp) is required but not provided.") }
+	gen_value = Math.min(14, Math.round(Math.log(params.genome_size) / 2 - 1))
         genes = file(params.genes)
 	output_dir = params.output_dir
 	snp = params.snps
@@ -175,23 +180,30 @@ switch (workflow_input) {
 }
 
 
+
 workflow GENOME_INDEX {
+
     take:
     genome
     genes
+    gen_value
+    genome_size
 
-    main:
+    main:   
+    if (genome_size > 4000000000 && aligner ==~ /.*star.*/ ) {
+        run_star_index_highmem(genome, genes, gen_value)
+    } else if (genome_size < 4000000000 && aligner == ~ /.*star.*/ ) {
+        run_star_index(genome, genes, gen_value)
+    } else if (genome_size > 4000000000 && aligner == "hisat_highmem") {
+       run_hisat_index_highmem(genome, genes)
+    } else if (genome_size < 4000000000 && aligner == "hisat") {
+       run_hisat_index(genome, genes)
+    } else if (aligner == "star-snps") {
+       run_star_index_snps(genome, genes, gen_value)
+    }
 
-    if (aligner == "hisat-highmem") {
-	run_hisat_index_high_mem(genome, genes)
-     } else if (aligner == "hisat") {
-	run_hisat_index(genome, genes) 
-     } else if (aligner == "star" || aligner == "star-plants")  {
-	run_star_index(genome, genes)
-     } else if (aligner == "star-snps") {
-	run_star_index_snps(genome, genes)
-     }
 }
+
 
 workflow READ_QC {
     take:
@@ -334,7 +346,7 @@ workflow {
  
 	switch (switchVariable) {
 	case 1:
-		GENOME_INDEX(genome, genes);
+		GENOME_INDEX(genome, genes, gen_value, genome_size);
 		break;
 	case 2:
 		READ_QC(samples);

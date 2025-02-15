@@ -11,7 +11,35 @@ input_snps       = params.snps
 //STAR
 sjOverhang       = params.sjOverhang
 
-//HISAT
+process run_star_index_highmem {
+
+    label 'star_highmem'
+    tag { "star: index" }
+
+    publishDir "${index_dir}/${output_dir}", mode: 'copy', overwrite: true
+
+    input:
+    path(genome)
+    path(genes)
+    val(gen_value)
+
+    output:
+    tuple val("starIndex"), path("*"), emit: star_index
+
+    script:
+    """
+    mkdir star_index
+
+    STAR --runMode genomeGenerate \
+         --genomeDir star_index \
+         --genomeFastaFiles ${genome} \
+         --runThreadN ${task.cpus} \
+         --sjdbGTFfile ${genes} \
+         --sjdbOverhang ${sjOverhang} \
+         --genomeSAindexNbases ${gen_value} \
+         --limitGenomeGenerateRAM 980000000000
+    """
+}
 
 process run_star_index {
 
