@@ -13,7 +13,7 @@ module load nextflow/22.10.0
 module load singularity/4.1.0-slurm
 
 # use container structure
-nextflow run -resume -profile singularity,pawsey_setonix ./main.nf \
+nextflow run -resume -profile singularity,pawsey_setonix -r main AAGI-AUS/qcflow-rnaseq \
   --workflow genome-index \
   --aligner star-plants \
   --genome "/path/to/genome/gemome.fa" \

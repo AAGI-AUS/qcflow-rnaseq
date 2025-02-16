@@ -199,3 +199,17 @@ results
 The aligner allows running multiple library alignments. Is samples are provided as ```NAMELIB1_file.fastq.gz```, ```NAMELIB2_file.fastq.gz```.... it's possible to align the reads by grouping them by sample name, provided by the user through the ```---library_name``` option.      
 Example: If you want to run the samples as ```LIB1_LIB001.fastq.gz``` and ```LIB1_LIB002.fastq.gz``` together in the alignemnt, you can use ```---library_name 1,4```. The pipeline will use the characters from 1 to 4 (inclusive) to determine the samples that will be grouped together. If the user leaves the default option, each pair of reads will be processed separately, even if they belong to the same sample.      
 
+## Memory usage
+Hisat and STAR has been tested with several types of genomes, including large genomes (genome size > human genome size), especially looking at memory usage.      
+In the current setup of the pipleine, the requested memory usage is calculated from the ```genome_size``` parameter, provided by the user.          
+
+### Examples
+* Lupin (*Lupinus albus sp.*) ~50Mb, works well with both Hisat and STAR aligners.     
+* Barley (*Hordeum vulgare*) ~5 GB, the genome size memory usage works well with STAR aligner (mapping and index) and default parameters. It requires a high memory usage for Hisat, at the index generation stage.     
+* Wheat (*Triticum aestivum*) 17GB, STAR mapping and index have been optimized with high memory options (400 GB) and has been used on High Performance Computing clusters. Hisat is not recommended because it requires large computing memory, which may exceed 1TB.        
+
+| Genome | Size                | Star index         | Star map           | Hisat index        | Hisat map          |
+|--------|---------------------|--------------------|--------------------|--------------------|--------------------|
+| Lupin  | _Lupinus albus sp._ | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Barley | _Hordeum vulgare_   | :white_check_mark: | :white_check_mark: | :warning:          | :white_check_mark: |
+| Wheat  | _Triticum aestivum_ | :warning:          | :warning:          | :x:                | :x:                |

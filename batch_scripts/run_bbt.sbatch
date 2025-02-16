@@ -10,8 +10,8 @@
 #SBATCH --export=NONE
 
 module load nextflow/22.10.0
-module load singularity/3.11.4-slurm
+module load singularity/4.1.0-slurm
 
 nextflow run -resume -profile singularity,pawsey_setonix ./create_bloom.nf \
   --output_dir results \
-  --input_fasta "$PWD/fasta/*fasta"
+  --input_fasta "/path/to/*fasta"

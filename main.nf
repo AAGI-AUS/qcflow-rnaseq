@@ -154,13 +154,14 @@ switch (workflow_input) {
                     .ifEmpty { exit 1, fastq_dir }
         break;
      case ["align"]:
-	include { run_star_align_plants; run_star_align; run_hisat_align; run_multiqc_align } from './modules/module_read_align.nf'
+	include { run_star_align_plants; run_star_align_plants_highmem; run_star_align_highmem; run_star_align; run_hisat_align; run_multiqc_align } from './modules/module_read_align.nf'
 	include { convert_bed; run_bam_stats; run_junction_annotation; combine_bam_stats } from './modules/module_align_qc.nf'
 	include { combine_counts_star; combine_counts_featurecounts; run_feature_counts } from './modules/module_align_counts.nf'
 	strandedness = params.strandedness
 	fastq_dir = params.fastq_dir
         library_name = params.library_name
 	genome = params.genome
+        genome_size = params.genome_size
 	genes = file(params.genes)
 	index = params.index_dir
 	aligner = params.aligner
@@ -256,17 +257,21 @@ workflow TRIM_READS {
 }
 
 workflow ALIGN_READS {
+
      take:
      samples_align
      aligner
      genes
 
      main:
-
-     if (aligner == "star" || aligner == "star-snps") {
-	output_align = run_star_align(samples_align, index, genes)
-     } else if (aligner == "star-plants") {
-	output_align = run_star_align_plants(samples_align, index, genes)
+     if (genome_size > 4000000000 && (aligner == "star" || aligner == "star-snps")) {
+         output_align = run_star_align_highmem(samples_align, index, genes)
+     } else if (genome_size < 4000000000 && (aligner == "star" || aligner == "star-snps")) {
+        output_align = run_star_align(samples_align, index, genes)
+     } else if (genome_size > 4000000000 && aligner == "star-plants") {
+        output_align = run_star_align_plants_highmem(samples_align, index, genes)
+     } else if (genome_size < 4000000000 && aligner == "star-plants") {
+        output_align = run_star_align_plants(samples_align, index, genes)
      } else if (aligner ==~ /.*hisat.*/)  {
 	output_align = run_hisat_align(samples_align, index, genes)
      } 
