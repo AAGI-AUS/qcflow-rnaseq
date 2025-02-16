@@ -208,8 +208,8 @@ In the current setup of the pipleine, the requested memory usage is calculated f
 * Barley (*Hordeum vulgare*) ~5 GB, the genome size memory usage works well with STAR aligner (mapping and index) and default parameters. It requires a high memory usage for Hisat, at the index generation stage.     
 * Wheat (*Triticum aestivum*) 17GB, STAR mapping and index have been optimized with high memory options (400 GB) and has been used on High Performance Computing clusters. Hisat is not recommended because it requires large computing memory, which may exceed 1TB.        
 
-| Genome | Size                | Star index         | Star map           | Hisat index        | Hisat map          |
-|--------|---------------------|--------------------|--------------------|--------------------|--------------------|
-| Lupin  | _Lupinus albus sp._ | :white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
-| Barley | _Hordeum vulgare_   | :white_check_mark: | :white_check_mark: | :warning:          | :white_check_mark: |
-| Wheat  | _Triticum aestivum_ | :warning:          | :warning:          | :x:                | :x:                |
+| Genome | Species             | genome size |Star index         | Star map           | Hisat index        | Hisat map          |
+|--------|---------------------|-------------|-------------------|--------------------|--------------------|--------------------|
+| Lupin  | _Lupinus albus sp._ | 500MB       |:white_check_mark: | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| Barley | _Hordeum vulgare_   | 4.3GB       | :white_check_mark: | :white_check_mark: | :warning:          | :white_check_mark: |
+| Wheat  | _Triticum aestivum_ | 14GB        | :warning:          | :warning:          | :x:                | :x:                |
