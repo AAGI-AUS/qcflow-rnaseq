@@ -47,13 +47,49 @@ process run_star_align {
      """
 }
 
+process run_star_align_highmem {
+
+     // Using large genomes index, requires large memory
+     label 'star_highmem'
+     tag "Star align reads for ${sample_id}"
+
+     publishDir "${output_dir}/alignements", mode: 'copy'
+
+     output:
+        tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: alignements
+        tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_Log.final.out"), emit: reports
+        tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_ReadsPerGene.out.tab"), emit: counts
+        tuple val(sample_id), path("star_aligned/${sample_id}/${sample_id}_SJ.out.tab"), emit: splicejunctions
+
+     input:
+        tuple val(sample_id), path(reads1), path(reads2)
+        val(index_dir)
+        val(genes)
+
+     script:
+        """
+        STAR --runThreadN ${task.cpus} \
+        --runMode alignReads \
+        --readFilesCommand zcat \
+        --sjdbOverhang ${sjOverhang} \
+        --outSAMunmapped Within \
+        --outFilterType BySJout \
+        --outSAMattributes NH HI AS NM MD \
+        --outSAMtype BAM SortedByCoordinate \
+        --quantMode GeneCounts \
+        --outTmpDir star_aligned/${sample_id}/_STARtmp \
+        --outFileNamePrefix star_aligned/${sample_id}/${sample_id}_ \
+        --genomeDir $index_dir \
+        --sjdbGTFfile $genes \
+        --readFilesIn ${reads1.join(",")} ${reads2.join(",")}
+     """
+}
 
 process run_star_align_plants {
 
      // Function uses specific parameters for large and gappy plant genomes (>3Gbp)
      label 'star'     
-     tag "Star align reads for ${sample_id}"
-     
+     tag "Star align reads for ${sample_id}"    
 
      publishDir "${output_dir}/alignements", mode: 'copy'
 
@@ -98,6 +134,55 @@ process run_star_align_plants {
         """
 }
 
+process run_star_align_plants_highmem {
+
+     // Function uses specific parameters for large and gappy plant genomes (>3Gbp)
+     // Includes run for large genomes
+     label 'star_highmem'
+     tag "Star align reads for ${sample_id}"
+
+     publishDir "${output_dir}/alignements", mode: 'copy'
+
+     input:
+        tuple val(sample_id), path(reads1), path(reads2)
+        val(index_dir)
+        val(genes)
+
+     output:
+        tuple val(sample_id), path("star_aligned_plants/${sample_id}/${sample_id}_Aligned.sortedByCoord.out.bam"), emit: alignements
+        tuple val(sample_id), path("star_aligned_plants/${sample_id}/${sample_id}_Log.final.out"), emit: reports
+        tuple val(sample_id), path("star_aligned_plants/${sample_id}/${sample_id}_ReadsPerGene.out.tab"), emit: counts
+        tuple val(sample_id), path("star_aligned_plants/${sample_id}/${sample_id}_SJ.out.tab"), emit: splicejunctions
+
+     script:
+        """
+        STAR --runThreadN ${task.cpus} \
+        --runMode alignReads \
+        --readFilesCommand zcat \
+        --sjdbScore 2 \
+        --sjdbOverhang ${sjOverhang} \
+        --limitSjdbInsertNsj 1000000 \
+        --outFilterMultimapNmax 10 \
+        --alignSJoverhangMin 8 \
+        --alignSJDBoverhangMin 1 \
+        --outFilterMismatchNmax 999 \
+        --outFilterMismatchNoverReadLmax 0.04 \
+        --alignIntronMin 20 \
+        --alignIntronMax 1000000 \
+        --alignMatesGapMax 1000000 \
+        --outSAMunmapped Within \
+        --outFilterType BySJout \
+        --outSAMattributes NH HI AS NM MD \
+        --outSAMtype BAM SortedByCoordinate \
+        --quantMode GeneCounts \
+        --twopassMode Basic \
+        --outTmpDir star_aligned_plants/${sample_id}/_STARtmp \
+        --outFileNamePrefix star_aligned_plants/${sample_id}/${sample_id}_ \
+        --genomeDir $index_dir \
+        --sjdbGTFfile $genes \
+        --readFilesIn ${reads1.join(",")} ${reads2.join(",")}
+        """
+}
 
 process run_hisat_align {
 

@@ -12,10 +12,13 @@
 module load nextflow/22.10.0
 module load singularity/4.1.0-slurm
 
+# use container structure
 nextflow run -resume -profile singularity,pawsey_setonix -r main AAGI-AUS/qcflow-rnaseq \
   --workflow genome-index \
-  --aligner star \
-  --genome "$PWD/references/GCA_009771035.1_CNRS_Lalb_1.0_genomic.fna" \
-  --genes "$PWD/references/GCA_009771035.1_CNRS_Lalb_1.0_genomic.gtf" \
-  --genome_size 420000000 \
+  --aligner star-plants \
+  --genome "/path/to/genome/gemome.fa" \
+  --genes "/path/to/genes/genes.gtf" \
+  --genome_size 14000000000 \
   --output_dir results
+
+# genome size must be included here
