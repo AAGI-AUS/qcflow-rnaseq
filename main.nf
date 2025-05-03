@@ -193,7 +193,7 @@ workflow GENOME_INDEX {
     main:   
     if (genome_size > 4000000000 && aligner ==~ /.*star.*/ ) {
         run_star_index_highmem(genome, genes, gen_value)
-    } else if (genome_size < 4000000000 && aligner == ~ /.*star.*/ ) {
+    } else if (genome_size < 4000000000 && aligner ==~ /.*star.*/ ) {
         run_star_index(genome, genes, gen_value)
     } else if (genome_size > 4000000000 && aligner == "hisat_highmem") {
        run_hisat_index_highmem(genome, genes)
