@@ -41,7 +41,7 @@ params.index_dir             = null
 params.hisat_prefix          = "hisat_index"
 
 // Fastp params
-params.adapters              = "$PWD/data/truseq_adapters.fasta"
+params.adapters              = "${projectDir}/data/truseq_adapters.fasta"
 params.qual_phred            = 20
 params.min_read_length       = 50
 
